@@ -1,5 +1,15 @@
 # Change Log
 
+## v1.9.0
+
+Maintained fork based on upstream v1.8.11 (the v2 rewrite is not used).
+
+* Kept cached accessories when ThinQ returns an empty device list, instead of removing every appliance and with it every HomeKit automation that referenced them.
+* Device names come from the Homebridge config, and restored accessories are renamed to match.
+* Dishwasher and Oven no longer publish a Television service (shown as "TV" in the Home app): the dishwasher valve and the oven thermostat are the main tiles.
+* Sent a browser User-Agent so LG's preLogin endpoint no longer returns 403 (upstream PR #400).
+* Allowed Node 24.
+
 ## v1.8.0
 
 ### Washer is fixed now

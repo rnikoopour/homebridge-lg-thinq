@@ -97,16 +97,44 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory);
   }
 
+  /**
+   * Dishwasher and Oven used to be published with a Television service, which the
+   * Home app shows as "TV" regardless of the configured name. They now publish
+   * without it under a separate, stable UUID so Home adds them fresh.
+   */
+  private accessoryUUID(device: Device): string {
+    if (['DISHWASHER', 'OVEN'].includes(device.type)) {
+      return this.api.hap.uuid.generate(device.id + ':no-tv');
+    }
+
+    return device.id;
+  }
+
   async discoverDevices() {
     const accessoriesToRemoveUUID = this.accessories.map(accessory => accessory.UUID);
 
     const devices: Device[] = await this.ThinQ.devices();
 
     if (!devices.length) {
+      if (this.accessories.length) {
+        // An empty list while accessories are cached is almost always a transient
+        // LG account state (e.g. a pending terms agreement), not every appliance
+        // being removed. Removing them would make HomeKit delete every automation
+        // that references them, so keep the cache and wait for the next start.
+        this.log.warn('ThinQ returned no devices; keeping ' + this.accessories.length +
+          ' cached accessories instead of removing them. Check the LG ThinQ app, then restart Homebridge.');
+        return;
+      }
       this.log.warn('No ThinQ devices in your account.');
     }
 
     for (const device of devices) {
+      // The name from the Homebridge config wins over the LG app alias.
+      const deviceConfig = this.config.devices.find(enabled => enabled.id === device.id);
+      if (deviceConfig?.name) {
+        device.data.alias = deviceConfig.name;
+      }
+
       this.log.debug('Device ['+device.name+']: ', device.toString());
       this.log.debug(JSON.stringify(device.data));
 
@@ -139,19 +167,25 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
 
       let lgThinQDevice;
 
-      const existingAccessory = this.accessories.find(accessory => accessory.UUID === device.id);
+      const uuid = this.accessoryUUID(device);
+      const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
       if (existingAccessory) {
-        accessoriesToRemoveUUID.splice(accessoriesToRemoveUUID.indexOf(device.id), 1);
+        accessoriesToRemoveUUID.splice(accessoriesToRemoveUUID.indexOf(uuid), 1);
 
         this.log.info('Restoring existing accessory:', device.toString());
         existingAccessory.context.device = device;
+        if (existingAccessory.displayName !== device.name) {
+          this.log.info('Updating accessory name:', existingAccessory.displayName, '->', device.name);
+          existingAccessory.updateDisplayName(device.name);
+          this.api.updatePlatformAccessories([existingAccessory]);
+        }
         lgThinQDevice = new accessoryType(this, existingAccessory);
       } else {
         this.log.info('Adding new accessory:', device.toString());
 
         const category = Helper.category(device);
         // create a new accessory
-        const accessory = new this.api.platformAccessory(device.name, device.id, category);
+        const accessory = new this.api.platformAccessory(device.name, uuid, category);
         accessory.context.device = device;
 
         lgThinQDevice = new accessoryType(this, accessory);

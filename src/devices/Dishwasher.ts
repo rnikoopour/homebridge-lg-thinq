@@ -39,18 +39,19 @@ export default class Dishwasher extends baseDevice {
   protected dishwasherClaenness;
 
   createInputSourceService(name, subtype, identifier, configuredName, isShow) {
-    return this.accessory.getService(name) ||
-      this.accessory.addService(this.platform.Service.InputSource, name, subtype)
-        .setCharacteristic(this.platform.Characteristic.Identifier, identifier)
-        .setCharacteristic(this.platform.Characteristic.ConfiguredName, configuredName)
-        .setCharacteristic(this.platform.Characteristic.IsConfigured, this.platform.Characteristic.IsConfigured.CONFIGURED)
-        .setCharacteristic(this.platform.Characteristic.InputSourceType, this.platform.Characteristic.InputSourceType.APPLICATION)
-        .setCharacteristic(this.platform.Characteristic.TargetVisibilityState,
-          isShow ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN,
-        )
-        .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState,
-          isShow ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN,
-        );
+    // Kept as a detached service (never published to HomeKit) so the status text
+    // logic keeps working without exposing a Television to the Home app.
+    return new this.platform.Service.InputSource(name, subtype)
+      .setCharacteristic(this.platform.Characteristic.Identifier, identifier)
+      .setCharacteristic(this.platform.Characteristic.ConfiguredName, configuredName)
+      .setCharacteristic(this.platform.Characteristic.IsConfigured, this.platform.Characteristic.IsConfigured.CONFIGURED)
+      .setCharacteristic(this.platform.Characteristic.InputSourceType, this.platform.Characteristic.InputSourceType.APPLICATION)
+      .setCharacteristic(this.platform.Characteristic.TargetVisibilityState,
+        isShow ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN,
+      )
+      .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState,
+        isShow ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN,
+      );
   }
 
   constructor(
@@ -70,10 +71,16 @@ export default class Dishwasher extends baseDevice {
 
     const device = accessory.context.device;
 
-    this.tvService = this.accessory.getService(this.config.name) ||
-      this.accessory.addService(this.platform.Service.Television, this.config.name, 'CataNicoGaTa-70');
-    this.tvService.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'LG Dishwasher');
-    this.tvService.setPrimaryService(true);
+    // Drop any Television/InputSource services restored from the cache.
+    for (const service of [...this.accessory.services]) {
+      if (service.UUID === this.platform.Service.Television.UUID || service.UUID === this.platform.Service.InputSource.UUID) {
+        this.accessory.removeService(service);
+      }
+    }
+
+    // The Home app treats an accessory with a Television service as a TV and
+    // labels it "TV"; keep it detached and use the valve as the main tile.
+    this.tvService = new this.platform.Service.Television(this.config.name, 'CataNicoGaTa-70');
     this.tvService.setCharacteristic(this.platform
       .Characteristic.SleepDiscoveryMode, this.platform.Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
     this.tvService.getCharacteristic(this.platform.Characteristic.Active)
@@ -161,6 +168,7 @@ export default class Dishwasher extends baseDevice {
     this.tvService.addLinkedService(this.dishwasherClaenness);
 
     this.serviceDishwasher = accessory.getService(Valve) || accessory.addService(Valve, 'LG Dishwasher');
+    this.serviceDishwasher.setPrimaryService(true);
     this.serviceDishwasher.setCharacteristic(Characteristic.Name, device.name);
     this.serviceDishwasher.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.serviceDishwasher.setCharacteristic(this.platform.Characteristic.ConfiguredName, device.name);

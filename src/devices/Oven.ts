@@ -127,18 +127,19 @@ export default class Oven extends baseDevice {
   protected probeTempControl;
 
   createInputSourceService(name, subtype, identifier, configuredName, isShow) {
-    return this.accessory.getService(name) ||
-      this.accessory.addService(this.platform.Service.InputSource, name, subtype)
-        .setCharacteristic(this.platform.Characteristic.Identifier, identifier)
-        .setCharacteristic(this.platform.Characteristic.ConfiguredName, configuredName)
-        .setCharacteristic(this.platform.Characteristic.IsConfigured, this.platform.Characteristic.IsConfigured.CONFIGURED)
-        .setCharacteristic(this.platform.Characteristic.InputSourceType, this.platform.Characteristic.InputSourceType.APPLICATION)
-        .setCharacteristic(this.platform.Characteristic.TargetVisibilityState,
-          isShow ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN,
-        )
-        .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState,
-          isShow ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN,
-        );
+    // Kept as a detached service (never published to HomeKit) so the status text
+    // logic keeps working without exposing a Television to the Home app.
+    return new this.platform.Service.InputSource(name, subtype)
+      .setCharacteristic(this.platform.Characteristic.Identifier, identifier)
+      .setCharacteristic(this.platform.Characteristic.ConfiguredName, configuredName)
+      .setCharacteristic(this.platform.Characteristic.IsConfigured, this.platform.Characteristic.IsConfigured.CONFIGURED)
+      .setCharacteristic(this.platform.Characteristic.InputSourceType, this.platform.Characteristic.InputSourceType.APPLICATION)
+      .setCharacteristic(this.platform.Characteristic.TargetVisibilityState,
+        isShow ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN,
+      )
+      .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState,
+        isShow ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN,
+      );
   }
 
   constructor(
@@ -149,10 +150,16 @@ export default class Oven extends baseDevice {
 
     const {Characteristic} = this.platform;
 
-    this.ovenService = this.accessory.getService(this.config.name) ||
-      this.accessory.addService(this.platform.Service.Television, this.config.name, 'NicoCataGaTa-OvenOven7');
-    this.ovenService.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'LG Range');
-    this.ovenService.setPrimaryService(true);
+    // Drop any Television/InputSource services restored from the cache.
+    for (const service of [...this.accessory.services]) {
+      if (service.UUID === this.platform.Service.Television.UUID || service.UUID === this.platform.Service.InputSource.UUID) {
+        this.accessory.removeService(service);
+      }
+    }
+
+    // The Home app treats an accessory with a Television service as a TV and
+    // labels it "TV"; keep it detached and use the thermostat as the main tile.
+    this.ovenService = new this.platform.Service.Television(this.config.name, 'NicoCataGaTa-OvenOven7');
     this.ovenService.setCharacteristic(this.platform
       .Characteristic.SleepDiscoveryMode, this.platform.Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
     this.ovenService.getCharacteristic(this.platform.Characteristic.Active)
@@ -633,7 +640,10 @@ export default class Oven extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.currentHeatingState())
         .setCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, 1);
     this.ovenTempControl.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.ovenTempControl.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Oven Temperature Control');
+    // Main tile: named after the oven itself.
+    this.ovenTempControl.setPrimaryService(true);
+    this.ovenTempControl.setCharacteristic(this.platform.Characteristic.Name, this.accessory.context.device.name);
+    this.ovenTempControl.setCharacteristic(this.platform.Characteristic.ConfiguredName, this.accessory.context.device.name);
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
       .setProps({validValues: [this.platform.Characteristic.TargetHeatingCoolingState.OFF, this.platform.Characteristic.TargetHeatingCoolingState.HEAT]})
       .on('get', (callback) => {

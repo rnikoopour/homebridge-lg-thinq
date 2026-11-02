@@ -26,6 +26,8 @@ export interface WasherDryerState {
   state?: string;
   remainTimeHour?: number;
   remainTimeMinute?: number;
+  initialTimeHour?: number;
+  initialTimeMinute?: number;
   doorLock?: string;
   TCLCount?: number | string;
   [key: string]: unknown;
@@ -38,6 +40,8 @@ export interface WasherDryerView {
   error: boolean;
   /** Seconds left in the running program; 0 when not running. */
   remainingSeconds: number;
+  /** Total length of the current program; 0 when unknown or not running. */
+  programSeconds: number;
   /** Tub clean coach counter, capped at 30. */
   tubCleanCount: number;
   tubCleanDue: boolean;
@@ -63,6 +67,9 @@ export function washerDryerView(data: WasherDryerState | null | undefined): Wash
     paused: PAUSED_STATES.includes(state ?? ''),
     error: state === 'ERROR',
     remainingSeconds: running ? remainingSeconds(data) : 0,
+    programSeconds: running
+      ? Math.max((Number(data?.initialTimeHour) || 0) * 3600 + (Number(data?.initialTimeMinute) || 0) * 60, remainingSeconds(data))
+      : 0,
     tubCleanCount,
     tubCleanDue: tubCleanCount >= 30,
   };

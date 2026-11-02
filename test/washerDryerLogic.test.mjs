@@ -29,7 +29,7 @@ const running = (minutes) => ({ state: 'RUNNING', remainTimeMinute: minutes });
 test('view: off, running, paused, error', () => {
   assert.deepEqual(
     { ...washerDryerView({ state: 'POWEROFF', remainTimeHour: 1, remainTimeMinute: 5 }) },
-    { powerOn: false, running: false, paused: false, error: false, remainingSeconds: 0, tubCleanCount: 0, tubCleanDue: false });
+    { powerOn: false, running: false, paused: false, error: false, remainingSeconds: 0, programSeconds: 0, tubCleanCount: 0, tubCleanDue: false });
   const running = washerDryerView({ state: 'RUNNING', remainTimeHour: 1, remainTimeMinute: 5 });
   assert.equal(running.powerOn, true);
   assert.equal(running.running, true);
@@ -135,4 +135,10 @@ test('finish: restart after the program ended does not fire a stale alert', () =
 
 test('finish: an idle machine never fires', () => {
   assert.deepEqual(run(['POWEROFF', 'INITIAL', 'POWEROFF']).events, []);
+});
+
+test('view: program length from LG\'s initial time, never shorter than the time left', () => {
+  assert.equal(washerDryerView({ state: 'RUNNING', initialTimeHour: 1, initialTimeMinute: 10, remainTimeMinute: 40 }).programSeconds, 4200);
+  assert.equal(washerDryerView({ state: 'RINSING', remainTimeMinute: 24 }).programSeconds, 1440);
+  assert.equal(washerDryerView({ state: 'POWEROFF', initialTimeHour: 1 }).programSeconds, 0);
 });

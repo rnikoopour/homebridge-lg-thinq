@@ -8,6 +8,7 @@
 * Dishwasher rewritten as thin HomeKit wiring over pure, tested rules (`dishwasherLogic.ts`): on/running (a delayed start that has not begun is not "in use"), time left, program length, door, rinse-aid level. The unpublished Television/status-text code was removed (791 to 189 lines); the published valve, door and Program Finished services are unchanged.
 * Dishwasher "Program Finished" uses the same rules (shared `programTracking.ts`): once per program at completion, not on stop/cancel/power cut, restarts handled; the model's own state values are used.
 * Washers/dryers that LG reports offline still show as off, and now also raise the HomeKit fault flag.
+* Washers/dryers publish the program length (SetDuration); without it the Home app showed "Waiting..." instead of a countdown.
 
 ## v2.1.0
 

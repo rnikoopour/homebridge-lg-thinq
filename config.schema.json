@@ -258,6 +258,12 @@
           "air_fast_mode": {
             "title": "Air Fast Mode",
             "type": "boolean"
+          },
+          "burners_name": {
+            "title": "Burners accessory name",
+            "type": "string",
+            "placeholder": "Burners",
+            "description": "Ranges only: the cooktop burners are published as a separate accessory with this name."
           }
         }
       }
@@ -388,6 +394,19 @@
               ],
               "condition": {
                 "functionBody": "return model.devices && model.devices[arrayIndices] && ['DISHWASHER'].includes(model.devices[arrayIndices].type);"
+              }
+            },
+            {
+              "type": "fieldset",
+              "title": "Range",
+              "description": "Configure dishwasher device settings.",
+              "expandable": true,
+              "expanded": false,
+              "items": [
+                "devices[].burners_name"
+              ],
+              "condition": {
+                "functionBody": "return model.devices && model.devices[arrayIndices] && ['OVEN'].includes(model.devices[arrayIndices].type);"
               }
             }
           ]

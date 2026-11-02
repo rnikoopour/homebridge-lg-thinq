@@ -179,7 +179,8 @@ async function buildOven(ovenState) {
   const { platform, calls } = makePlatform([{ id: OVEN_ID, name: 'Oven' }]);
   stubThinQ(platform, [device]);
   await platform.discoverDevices();
-  return { accessory: calls.registered[0], OVEN_ID, platform };
+  const burners = calls.registered.find(a => a.UUID === hap.uuid.generate(OVEN_ID + ':burners'));
+  return { accessory: calls.registered[0], burners, OVEN_ID, platform };
 }
 
 async function readAll(accessory) {
@@ -364,4 +365,39 @@ test('oven: remote start disabled on the oven blocks commands even with Monitor 
   await on('Start Oven').handleSetRequest(true);
   assert.equal(sent, 0);
   assert.equal(await on('Monitor Only Mode').handleGetRequest(), true, 'shows as monitor only');
+});
+
+test('burners: a separate Burners accessory, bundled and named per burner; the oven no longer has range parts', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { accessory: oven, burners } = await buildOven('bakingState'); // fixture: front left burner on
+  assert.ok(burners, 'Burners accessory registered');
+  assert.equal(burners.displayName, 'Burners');
+  assert.equal(oven.services.filter(s => ['Range is Cooking', 'Number of Burners in Use'].includes(s.displayName)).length, 0);
+
+  const switches = burners.services.filter(s => s.UUID === Service.Switch.UUID);
+  const main = switches.find(s => s.isPrimaryService);
+  assert.equal(nameOf(main), 'Burners');
+  assert.deepEqual(switches.filter(s => !s.isPrimaryService).map(nameOf).sort(),
+    ['Burners Back Left', 'Burners Back Right', 'Burners Center', 'Burners Front Left', 'Burners Front Right']);
+  assert.equal(main.linkedServices.length, 5, 'burners bundled under the main switch');
+
+  const frontLeft = switches.find(s => nameOf(s) === 'Burners Front Left').getCharacteristic(Characteristic.On);
+  assert.equal(await main.getCharacteristic(Characteristic.On).handleGetRequest(), true);
+  assert.equal(await frontLeft.handleGetRequest(), true);
+  assert.equal(await switches.find(s => nameOf(s) === 'Burners Center').getCharacteristic(Characteristic.On).handleGetRequest(), false);
+
+  await frontLeft.handleSetRequest(false); // read only: a tap reverts
+  t.mock.timers.tick(500);
+  assert.equal(frontLeft.value, true);
+});
+
+test('burners: the config can rename the Burners accessory', async () => {
+  const OVEN_ID = hap.uuid.generate('oven-2');
+  const fixture = ovenFixture();
+  const device = new Device({ ...fixture.device, deviceId: OVEN_ID });
+  device.deviceModel = new DeviceModel(fixture.model);
+  const { platform, calls } = makePlatform([{ id: OVEN_ID, name: 'Oven', burners_name: 'Cooktop' }]);
+  stubThinQ(platform, [device]);
+  await platform.discoverDevices();
+  assert.equal(calls.registered.find(a => a.UUID === hap.uuid.generate(OVEN_ID + ':burners')).displayName, 'Cooktop');
 });

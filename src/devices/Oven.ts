@@ -43,7 +43,7 @@ const HUMIDITY = 50;
  * - Thermostat "Oven" (main tile) and "Probe Temperature Control"
  * - Switches: cooking modes (select the mode for the next start), Start, Stop,
  *   Monitor Only (blocks commands), Keep Warm (when the model reports it)
- * - Sensors: door, remote control enabled, range is cooking, burners in use
+ * - Sensors: door, remote control enabled (cooktop burners: see Range.ts)
  */
 export default class Oven extends baseDevice {
   /** What the user selected in HomeKit for the next start. */
@@ -60,9 +60,7 @@ export default class Oven extends baseDevice {
   protected monitorOnlySwitch;
   protected keepWarmSwitch;
   protected doorSensor;
-  protected rangeOnSensor;
   protected remoteEnabledSensor;
-  protected burnersSensor;
 
   constructor(
     public readonly platform: LGThinQHomebridgePlatform,
@@ -71,9 +69,11 @@ export default class Oven extends baseDevice {
     super(platform, accessory);
     const {Service, Characteristic} = this.platform;
 
-    // Earlier versions published a Television service with status text inputs and timer valves.
+    // Earlier versions published a Television service with status text inputs and timer valves,
+    // and the cooktop parts that now live on the separate "Burners" accessory.
     for (const service of [...this.accessory.services]) {
-      if ([Service.Television.UUID, Service.InputSource.UUID, Service.Valve.UUID].includes(service.UUID)) {
+      if ([Service.Television.UUID, Service.InputSource.UUID, Service.Valve.UUID].includes(service.UUID)
+        || ['Range is Cooking', 'Number of Burners in Use'].includes(service.displayName)) {
         this.accessory.removeService(service);
       }
     }
@@ -153,9 +153,7 @@ export default class Oven extends baseDevice {
 
     // Sensors
     this.doorSensor = this.serviceFor(Service.ContactSensor, 'Oven Door', 'NicoCataGaTa-OvenTCBCS');
-    this.rangeOnSensor = this.serviceFor(Service.MotionSensor, 'Range is Cooking', 'NicoCataGaTa-OvenTCBCSMotion');
     this.remoteEnabledSensor = this.serviceFor(Service.ContactSensor, 'Remote Control Enabled', 'NicoCataGaTa-OvenTCRCS');
-    this.burnersSensor = this.serviceFor(Service.LightSensor, 'Number of Burners in Use', 'NicoCataGaTa-OvenTCB');
 
     this.updateAccessoryCharacteristic(this.accessory.context.device);
   }
@@ -269,13 +267,9 @@ export default class Oven extends baseDevice {
     }
 
     this.doorSensor.updateCharacteristic(Characteristic.ContactSensorState, view.doorOpen ? 1 : 0);
-    this.doorSensor.updateCharacteristic(Characteristic.StatusActive, view.rangeOn);
-    this.rangeOnSensor.updateCharacteristic(Characteristic.MotionDetected, view.rangeOn);
-    this.rangeOnSensor.updateCharacteristic(Characteristic.StatusActive, view.rangeOn);
+    this.doorSensor.updateCharacteristic(Characteristic.StatusActive, view.ovenOn);
     this.remoteEnabledSensor.updateCharacteristic(Characteristic.ContactSensorState, view.remoteStartEnabled ? 1 : 0);
-    this.remoteEnabledSensor.updateCharacteristic(Characteristic.StatusActive, view.rangeOn);
-    this.burnersSensor.updateCharacteristic(Characteristic.CurrentAmbientLightLevel, view.burnersOn < 1 ? 0.0001 : view.burnersOn);
-    this.burnersSensor.updateCharacteristic(Characteristic.StatusActive, view.burnersOn > 0);
+    this.remoteEnabledSensor.updateCharacteristic(Characteristic.StatusActive, view.ovenOn);
   }
 }
 

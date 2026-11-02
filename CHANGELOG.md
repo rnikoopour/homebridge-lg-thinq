@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.2.1
+
+* Platform decisions moved into pure, unit-tested functions (`src/platformLogic.ts`): which devices are published, config name overrides, which accessories (and UUIDs) each device gets, service name prefixes, and keeping the cache when LG returns no devices.
+* Fix: an appliance name ending or starting with punctuation (e.g. "Oven (Upper)") was prefixed onto its service names again on every restart.
+* Microwave: all loose `==`/`!=` comparisons replaced with strict ones (LG fields are converted with `Number()` first, so behavior is unchanged); its time fields are summed as numbers via the shared `hmsSeconds`. `eqeqeq` is now a lint error.
+
 ## v2.2.0
 
 * Washer/dryer logic moved into pure, unit-tested functions (`src/devices/washerDryerLogic.ts`); the accessory class only wires them to HomeKit.

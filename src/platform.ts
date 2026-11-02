@@ -6,6 +6,7 @@ import Range from './devices/Range';
 import {ThinQ} from './lib/ThinQ';
 import {EventEmitter} from 'events';
 import {PlatformType} from './lib/constants';
+import {AccessoryPlan, accessoryPlans, configuredName, deviceDecision, keepCacheOnEmptyDeviceList, prefixedServiceName} from './platformLogic';
 import {ManualProcessNeeded, NotConnectedError} from './errors';
 import {Device} from './lib/Device';
 import Characteristics from './characteristics';
@@ -104,17 +105,9 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory);
   }
 
-  /**
-   * Dishwasher and Oven used to be published with a Television service, which the
-   * Home app shows as "TV" regardless of the configured name. They now publish
-   * without it under a separate, stable UUID so Home adds them fresh.
-   */
-  private accessoryUUID(device: Device): string {
-    if (['DISHWASHER', 'OVEN'].includes(device.type)) {
-      return this.api.hap.uuid.generate(device.id + ':no-tv');
-    }
-
-    return device.id;
+  /** The UUID for an accessory plan: the device id, or one generated from the plan's seed. */
+  private uuidFor(device: Device, plan: AccessoryPlan): string {
+    return plan.uuidSeed === null ? device.id : this.api.hap.uuid.generate(plan.uuidSeed);
   }
 
   /**
@@ -145,16 +138,13 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
    */
   private prefixServiceNames(accessory: PlatformAccessory, deviceName: string) {
     const { Service, Characteristic } = this.api.hap;
-    const escaped = deviceName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const deviceWord = new RegExp('\\b' + escaped + '\\b', 'gi');
 
     for (const service of accessory.services) {
       if (service.isPrimaryService || service.UUID === Service.AccessoryInformation.UUID) {
         continue;
       }
       const current = String(service.getCharacteristic(Characteristic.Name).value ?? service.displayName ?? '');
-      const base = current.replace(deviceWord, ' ').replace(/^[\s-]+|[\s-]+$/g, '').replace(/\s+/g, ' ');
-      const name = base ? deviceName + ' ' + base : deviceName;
+      const name = prefixedServiceName(current, deviceName);
       if (name !== current) {
         service.setCharacteristic(Characteristic.Name, name);
       }
@@ -207,35 +197,31 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
 
     const devices: Device[] = await this.ThinQ.devices();
 
-    if (!devices.length) {
-      if (this.accessories.length) {
-        // An empty list while accessories are cached is almost always a transient
-        // LG account state (e.g. a pending terms agreement), not every appliance
-        // being removed. Removing them would make HomeKit delete every automation
-        // that references them, so keep the cache and wait for the next start.
-        this.log.warn('ThinQ returned no devices; keeping ' + this.accessories.length +
+    if (keepCacheOnEmptyDeviceList(devices.length, this.accessories.length)) {
+      // See keepCacheOnEmptyDeviceList: removing them would delete HomeKit automations.
+      this.log.warn('ThinQ returned no devices; keeping ' + this.accessories.length +
           ' cached accessories instead of removing them. Check the LG ThinQ app, then restart Homebridge.');
-        return;
-      }
+      return;
+    }
+    if (!devices.length) {
       this.log.warn('No ThinQ devices in your account.');
     }
 
     for (const device of devices) {
-      // The name from the Homebridge config wins over the LG app alias.
-      const deviceConfig = this.config.devices.find(enabled => enabled.id === device.id);
-      if (deviceConfig?.name) {
-        device.data.alias = deviceConfig.name;
+      const name = configuredName(device.id, this.config.devices);
+      if (name) {
+        device.data.alias = name;
       }
 
       this.log.debug('Device ['+device.name+']: ', device.toString());
       this.log.debug(JSON.stringify(device.data));
 
-      if (!this.enable_thinq1 && device.platform === PlatformType.ThinQ1) {
+      const decision = deviceDecision(device, this.config.devices, this.enable_thinq1);
+      if (decision === 'skip-thinq1') {
         this.log.debug('Thinq1 device is skipped: ', device.toString());
         continue;
       }
-
-      if (this.config.devices.length && !this.config.devices.find(enabled => enabled.id === device.id)) {
+      if (decision === 'skip-not-selected') {
         this.log.info('Device skipped: ', device.id);
         continue;
       }
@@ -257,14 +243,9 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
         continue;
       }
 
-      this.restoreOrAddAccessory(device, this.accessoryUUID(device), device.name, accessoryType,
-        accessoriesToRemoveUUID, ['DISHWASHER', 'OVEN'].includes(device.type));
-
-      // A range's cooktop burners are a separate "Burners" accessory next to the oven.
-      if (device.type === 'OVEN') {
-        const deviceConfig = this.config.devices.find(enabled => enabled.id === device.id);
-        this.restoreOrAddAccessory(device, this.api.hap.uuid.generate(device.id + ':burners'),
-          deviceConfig?.burners_name || 'Burners', Range, accessoriesToRemoveUUID, false);
+      for (const plan of accessoryPlans(device, device.name, this.config.devices)) {
+        this.restoreOrAddAccessory(device, this.uuidFor(device, plan), plan.name,
+          plan.kind === 'burners' ? Range : accessoryType, accessoriesToRemoveUUID, plan.bundle);
       }
     }
 

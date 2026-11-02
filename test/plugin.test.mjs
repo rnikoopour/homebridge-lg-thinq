@@ -1,0 +1,139 @@
+// Tests run against the compiled plugin (dist/) with the real HAP-NodeJS library,
+// using only synthetic data and upstream's public sample/ files.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import * as hap from '@homebridge/hap-nodejs';
+
+const require = createRequire(import.meta.url);
+const { LGThinQHomebridgePlatform } = require('../dist/platform.js');
+const { Device } = require('../dist/lib/Device.js');
+const { DeviceModel } = require('../dist/lib/DeviceModel.js');
+const { mergeDeep } = require('../dist/helper.js');
+
+// LG device ids are UUIDs, and HAP requires accessory UUIDs to be valid.
+const WASHER_ID = hap.uuid.generate('washer-1');
+const OLD_ID = hap.uuid.generate('old-device');
+const ABC_ID = hap.uuid.generate('abc');
+
+const sample = (name) => JSON.parse(fs.readFileSync(new URL(`../sample/${name}`, import.meta.url), 'utf8'));
+
+// Homebridge's PlatformAccessory is a thin wrapper around HAP's Accessory.
+class TestAccessory extends hap.Accessory {
+  constructor(name, uuid, category) {
+    super(name, uuid);
+    this.category = category;
+    this.context = {};
+  }
+
+  updateDisplayName(name) {
+    this.displayName = name;
+  }
+}
+
+const log = { info() {}, warn() {}, error() {}, debug() {}, success() {}, log() {} };
+
+function makePlatform(devicesConfig) {
+  const calls = { registered: [], unregistered: [], updated: [] };
+  const api = {
+    hap,
+    platformAccessory: TestAccessory,
+    on() {},
+    user: { storagePath: () => fs.mkdtempSync(path.join(os.tmpdir(), 'lgthinq-test-')) },
+    registerPlatformAccessories: (_plugin, _platform, accessories) => calls.registered.push(...accessories),
+    unregisterPlatformAccessories: (_plugin, _platform, accessories) => calls.unregistered.push(...accessories),
+    updatePlatformAccessories: (accessories) => calls.updated.push(...accessories),
+  };
+  const platform = new LGThinQHomebridgePlatform(log, {
+    platform: 'LGThinQ', country: 'US', language: 'en-US', refresh_token: 'test', devices: devicesConfig,
+  }, api);
+  return { platform, calls };
+}
+
+function sampleWasher({ id = WASHER_ID, alias = 'LG App Name', state = 'POWEROFF', online = true } = {}) {
+  const data = structuredClone(sample('washer_dryer.json'));
+  data.deviceId = id;
+  data.alias = alias;
+  data.online = online;
+  data.snapshot = { ...data.snapshot, online, washerDryer: { ...data.snapshot.washerDryer, state } };
+  const device = new Device(data);
+  device.deviceModel = new DeviceModel(sample('washer_dryer-model.json'));
+  return device;
+}
+
+function stubThinQ(platform, devices) {
+  platform.ThinQ.devices = async () => devices;
+  platform.ThinQ.setup = async () => true;
+  platform.ThinQ.unregister = async () => {};
+}
+
+const { Characteristic, Service } = hap;
+const nameOf = (service) => service.getCharacteristic(Characteristic.Name).value;
+
+test('keeps cached accessories when ThinQ returns an empty device list', async () => {
+  const { platform, calls } = makePlatform([]);
+  platform.accessories.push(new TestAccessory('Washer', WASHER_ID));
+  stubThinQ(platform, []);
+
+  await platform.discoverDevices();
+
+  assert.equal(calls.unregistered.length, 0);
+  assert.equal(platform.accessories.length, 1);
+});
+
+test('still removes an accessory whose device is gone when other devices are returned', async () => {
+  const { platform, calls } = makePlatform([]);
+  platform.accessories.push(new TestAccessory('Old', OLD_ID));
+  stubThinQ(platform, [sampleWasher()]);
+
+  await platform.discoverDevices();
+
+  assert.deepEqual(calls.unregistered.map(a => a.UUID), [OLD_ID]);
+});
+
+test('names come from the Homebridge config and prefix every sub-service', async () => {
+  const { platform, calls } = makePlatform([{ id: WASHER_ID, name: 'Washer', washer_trigger: true }]);
+  stubThinQ(platform, [sampleWasher({ alias: 'LG App Name' })]);
+
+  await platform.discoverDevices();
+
+  const [accessory] = calls.registered;
+  assert.equal(accessory.displayName, 'Washer');
+  const finished = accessory.getService(Service.OccupancySensor);
+  assert.ok(finished, 'Program Finished sensor exists');
+  assert.equal(nameOf(finished), 'Washer Program Finished');
+  assert.equal(finished.getCharacteristic(Characteristic.ConfiguredName).value, 'Washer Program Finished');
+});
+
+test('former TV devices get a stable no-tv UUID; others use the LG device id', () => {
+  const { platform } = makePlatform([]);
+  const uuidFor = (deviceType) => platform['accessoryUUID'](new Device({ deviceId: ABC_ID, deviceType }));
+
+  assert.equal(uuidFor(204), hap.uuid.generate(ABC_ID + ':no-tv')); // DISHWASHER
+  assert.equal(uuidFor(301), hap.uuid.generate(ABC_ID + ':no-tv')); // OVEN
+  assert.equal(uuidFor(221), ABC_ID); // WASHER_NEW
+});
+
+test('partial ThinQ updates merge into the cached snapshot', () => {
+  const current = { online: true, washerDryer: { state: 'RUNNING', remainTimeHour: 1, remainTimeMinute: 58 } };
+  const merged = mergeDeep({}, current, { washerDryer: { remainTimeMinute: 57 } });
+
+  assert.deepEqual(merged, { online: true, washerDryer: { state: 'RUNNING', remainTimeHour: 1, remainTimeMinute: 57 } });
+  assert.equal(current.washerDryer.remainTimeMinute, 58, 'input snapshot is not mutated');
+});
+
+test('a powered-off washer that LG reports offline shows as off, not an error', async () => {
+  const { platform, calls } = makePlatform([{ id: WASHER_ID, name: 'Washer' }]);
+  stubThinQ(platform, [sampleWasher({ state: 'POWEROFF', online: false })]);
+
+  await platform.discoverDevices();
+
+  const valve = calls.registered[0].getService(Service.Valve);
+  const active = await valve.getCharacteristic(Characteristic.Active).handleGetRequest();
+  assert.equal(active, Characteristic.Active.INACTIVE);
+  const inUse = await valve.getCharacteristic(Characteristic.InUse).handleGetRequest();
+  assert.equal(inUse, Characteristic.InUse.NOT_IN_USE);
+});

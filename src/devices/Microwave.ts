@@ -75,8 +75,7 @@ export default class Microwave extends baseDevice {
     public readonly accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
-    const { Service: { Valve, Fan, Lightbulb, ContactSensor, OccupancySensor, IrrigationSystem }, Characteristic } = this.platform;
-    const device = accessory.context.device;
+    const { Characteristic } = this.platform;
 
     this.serviceHood = this.accessory.getService('Microwave Fan') ||
       this.accessory.addService(this.platform.Service.Fanv2, 'Microwave Fan', 'YourUniqueIdentifier-59F');
@@ -245,8 +244,7 @@ export default class Microwave extends baseDevice {
               this.sendLightVentCommand();
             }
           }, this.timeOut);
-        }
-        else {
+        } else {
           if (this.Status.data?.mwoVentSpeedLevel === 0 || this.Status.data?.mwoLampLevel === 0) {
             this.lampLevel = 2;
             this.ventSpeed = 2;
@@ -818,7 +816,6 @@ export default class Microwave extends baseDevice {
 
   async sendLightVentCommand() {
     this.platform.log.debug('Fan Speed: ' + this.ventSpeed + ' Light: ' + this.lampLevel);
-    let _a;
     const ctrlKey = 'setVentLampLevel';
     const device = this.accessory.context.device;
     this.platform.ThinQ?.deviceControl(device, {
@@ -1338,7 +1335,7 @@ export default class Microwave extends baseDevice {
   OvenSubCookMenu(name) {
     if (this.Status.data?.LWOSubCookName !=
       0 && typeof this.Status.data?.LWOSubCookName !== 'undefined') {
-      let subCookCap = '';
+      let subCookCap: string;
       switch (this.Status.data?.LWOSubCookName) {
         case 3335:
           subCookCap = 'Buffalo Wings';
@@ -1543,8 +1540,7 @@ export default class Microwave extends baseDevice {
   targetHeatingState() {
     if (this.Status.data.LWOTargetTemperatureValue !== 0 || this.defaultTemp !== 0) {
       return 1;
-    }
-    else {
+    } else {
       return 0;
     }
   }
@@ -1616,7 +1612,6 @@ export default class Microwave extends baseDevice {
   updateAccessoryCharacteristic(device) {
     super.updateAccessoryCharacteristic(device);
     //this.platform.log('Device Response', device)
-    const ovenState = device.snapshot.ovenState;
     //const isVentOn = ovenState['ventSet'] === device.deviceModel.lookupMonitorName('VentSet', '@CP_ENABLE_W');
     //const isLampOn = ovenState['lampSet'] === device.deviceModel.lookupMonitorName('LampSet', '@CP_ENABLE_W');
     const { Characteristic } = this.platform;

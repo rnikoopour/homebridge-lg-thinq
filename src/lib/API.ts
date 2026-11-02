@@ -49,7 +49,7 @@ export class API {
   }
 
   protected async request(method, uri: string, data?: any, retry = false) {
-    // eslint-disable-next-line max-len
+
     const requestHeaders = (this._gateway?.thinq1_url && uri.startsWith(this._gateway.thinq1_url)) ? this.monitorHeaders : this.defaultHeaders;
 
     const url = resolveUrl(this._gateway?.thinq2_url, uri);

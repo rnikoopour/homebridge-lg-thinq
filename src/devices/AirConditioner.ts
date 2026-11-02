@@ -317,7 +317,7 @@ export default class AirConditioner extends baseDevice {
     }
 
     this.service.updateCharacteristic(Characteristic.RotationSpeed, this.Status.windStrength);
-    // eslint-disable-next-line max-len
+
     this.service.updateCharacteristic(Characteristic.SwingMode, this.Status.isSwingOn ? Characteristic.SwingMode.SWING_ENABLED : Characteristic.SwingMode.SWING_DISABLED);
 
     this.service.updateCharacteristic(this.platform.customCharacteristics.TotalConsumption, this.Status.currentConsumption);
@@ -350,7 +350,7 @@ export default class AirConditioner extends baseDevice {
     if (this.config?.ac_fan_control as boolean && this.serviceFanV2) {
       this.serviceFanV2.updateCharacteristic(Characteristic.Active, this.Status.isPowerOn ? Active.ACTIVE : Active.INACTIVE);
       this.serviceFanV2.updateCharacteristic(Characteristic.RotationSpeed, this.Status.windStrength);
-      // eslint-disable-next-line max-len
+
       this.serviceFanV2.updateCharacteristic(Characteristic.SwingMode, this.Status.isSwingOn ? Characteristic.SwingMode.SWING_ENABLED : Characteristic.SwingMode.SWING_DISABLED);
     }
 
@@ -399,7 +399,7 @@ export default class AirConditioner extends baseDevice {
         TargetHeaterCoolerState,
       },
     } = this.platform;
-  
+
     // Map HomeKit states to LG opModes
     let opMode;
     switch (value) {
@@ -415,7 +415,7 @@ export default class AirConditioner extends baseDevice {
       default:
         opMode = this.Status.opMode; // Keep current mode
     }
-  
+
     if (opMode !== this.Status.opMode) {
       await this.setOpMode(opMode);
     }
@@ -558,7 +558,7 @@ export default class AirConditioner extends baseDevice {
 
         // do not allow change status via home app, revert to prev status in 0.1s
         setTimeout(() => {
-          // eslint-disable-next-line max-len
+
           this.serviceFanV2.updateCharacteristic(Characteristic.Active, this.Status.isPowerOn ? Characteristic.Active.ACTIVE : Characteristic.Active.INACTIVE);
           this.serviceFanV2.updateCharacteristic(Characteristic.RotationSpeed, this.Status.windStrength);
         }, 100);
@@ -616,33 +616,33 @@ export default class AirConditioner extends baseDevice {
     this.service.getCharacteristic(Characteristic.CurrentHeaterCoolerState)
       .updateValue(Characteristic.CurrentHeaterCoolerState.INACTIVE);
 
-if (this.config.ac_mode === 'BOTH') {
-  this.service.getCharacteristic(Characteristic.TargetHeaterCoolerState)
-    .setProps({
-      validValues: [
-        Characteristic.TargetHeaterCoolerState.AUTO,
-        Characteristic.TargetHeaterCoolerState.COOL,
-        Characteristic.TargetHeaterCoolerState.HEAT,
-      ],
-    })
-    .updateValue(Characteristic.TargetHeaterCoolerState.COOL);
-} else if (this.config.ac_mode === 'COOLING') {
-  this.service.getCharacteristic(Characteristic.TargetHeaterCoolerState)
-    .setProps({
-      validValues: [
-        Characteristic.TargetHeaterCoolerState.COOL,
-      ],
-    })
-    .updateValue(Characteristic.TargetHeaterCoolerState.COOL);
-} else if (this.config.ac_mode === 'HEATING') {
-  this.service.getCharacteristic(Characteristic.TargetHeaterCoolerState)
-    .setProps({
-      validValues: [
-        Characteristic.TargetHeaterCoolerState.HEAT,
-      ],
-    })
-    .updateValue(Characteristic.TargetHeaterCoolerState.HEAT);
-}
+    if (this.config.ac_mode === 'BOTH') {
+      this.service.getCharacteristic(Characteristic.TargetHeaterCoolerState)
+        .setProps({
+          validValues: [
+            Characteristic.TargetHeaterCoolerState.AUTO,
+            Characteristic.TargetHeaterCoolerState.COOL,
+            Characteristic.TargetHeaterCoolerState.HEAT,
+          ],
+        })
+        .updateValue(Characteristic.TargetHeaterCoolerState.COOL);
+    } else if (this.config.ac_mode === 'COOLING') {
+      this.service.getCharacteristic(Characteristic.TargetHeaterCoolerState)
+        .setProps({
+          validValues: [
+            Characteristic.TargetHeaterCoolerState.COOL,
+          ],
+        })
+        .updateValue(Characteristic.TargetHeaterCoolerState.COOL);
+    } else if (this.config.ac_mode === 'HEATING') {
+      this.service.getCharacteristic(Characteristic.TargetHeaterCoolerState)
+        .setProps({
+          validValues: [
+            Characteristic.TargetHeaterCoolerState.HEAT,
+          ],
+        })
+        .updateValue(Characteristic.TargetHeaterCoolerState.HEAT);
+    }
 
     this.service.getCharacteristic(Characteristic.TargetHeaterCoolerState)
       .onSet(this.setTargetState.bind(this));

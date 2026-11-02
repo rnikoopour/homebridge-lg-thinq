@@ -80,7 +80,7 @@ export class ThinQ {
     if (device.platform === PlatformType.ThinQ1 && device.id in this.workIds && this.workIds[device.id] !== null) {
       try {
         await this.api.sendMonitorCommand(device.id, 'Stop', this.workIds[device.id]);
-      } catch (err) {
+      } catch {
         //this.log.error(err);
       }
 
@@ -145,7 +145,7 @@ export class ThinQ {
           // retry 1 times
           try {
             result = await this.api.getMonitorResult(device.id, this.workIds[device.id]);
-          } catch (err) {
+          } catch {
             // stop it
             // await this.stopMonitor(device);
           }
@@ -256,7 +256,7 @@ export class ThinQ {
       rootCAUrl = 'http://www.tbs-x509.com/Comodo_AAA_Certificate_Services.crt';
     } else {
       // use legacy VeriSign cert for other endpoint
-      // eslint-disable-next-line max-len
+
       rootCAUrl = 'https://www.websecurity.digicert.com/content/dam/websitesecurity/digitalassets/desktop/pdfs/roots/VeriSign-Class%203-Public-Primary-Certification-Authority-G5.pem';
     }
 

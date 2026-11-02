@@ -30,7 +30,7 @@ program
   .argument('<username>', 'LG username')
   .argument('<password>', 'LG password')
   .action(async (username, password) => {
-    // eslint-disable-next-line max-len,no-console
+    // eslint-disable-next-line no-console
     console.info('Start login: username =', username, ', password =', password, ', country =', options.country, ', language =', options.language);
     try {
       const api = new API(options.country, options.language);

@@ -261,13 +261,13 @@ export default class Refrigerator extends baseDevice {
     service.updateCharacteristic(Characteristic.CurrentHeatingCoolingState, Characteristic.CurrentHeatingCoolingState.COOL)
       .getCharacteristic(Characteristic.CurrentHeatingCoolingState)
       .setProps({
-        validValues: [Characteristic.CurrentHeatingCoolingState.COOL] // Hide other states
+        validValues: [Characteristic.CurrentHeatingCoolingState.COOL], // Hide other states
       });
 
     service.getCharacteristic(Characteristic.TargetHeatingCoolingState)
       .updateValue(Characteristic.TargetHeatingCoolingState.COOL)
       .setProps({
-        validValues: [Characteristic.TargetHeatingCoolingState.COOL] // Hide Heat/Auto/Off
+        validValues: [Characteristic.TargetHeatingCoolingState.COOL], // Hide Heat/Auto/Off
       });
 
     service.getCharacteristic(Characteristic.TemperatureDisplayUnits).setProps({

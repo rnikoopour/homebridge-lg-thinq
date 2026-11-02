@@ -1,5 +1,4 @@
 import {Device} from '../lib/Device';
-import {PlatformType} from '../lib/constants';
 import {DeviceModel} from '../lib/DeviceModel';
 import AirState from './transforms/AirState';
 import WasherDryer from './transforms/WasherDryer';

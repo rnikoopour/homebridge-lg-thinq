@@ -1,5 +1,5 @@
 import {default as RangeHoodV2} from '../../devices/RangeHood';
-import {CharacteristicValue} from "homebridge";
+import {CharacteristicValue} from 'homebridge';
 import {Device} from '../../lib/Device';
 
 export default class RangeHood extends RangeHoodV2 {

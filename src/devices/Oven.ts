@@ -4,7 +4,7 @@
 import {baseDevice} from '../baseDevice';
 import {LGThinQHomebridgePlatform} from '../platform';
 import {Perms, PlatformAccessory} from 'homebridge';
-import {DeviceModel} from "../lib/DeviceModel";
+import {DeviceModel} from '../lib/DeviceModel';
 
 enum OvenState {
   INITIAL = '@OV_STATE_INITIAL_W',
@@ -16,28 +16,6 @@ enum OvenState {
   CLEANING_DONE = '@OV_STATE_CLEAN_COMPLETE_W',
 }
 
-enum OvenMode {
-  NONE = '@NONE',
-  BAKE = '@OV_TERM_BAKE_W',
-  ROAST = '@OV_TERM_ROAST_W',
-  CONVECTION_BAKE = '@OV_TERM_CONV_BAKE_W',
-  CONVECTION_ROAST = '@OV_TERM_CONV_ROAST_W',
-  CRISP_CONVECTION = '@OV_TERM_CRISP_CONV_W',
-  FAVORITE = '@OV_TERM_COOKMODE_FAVORITE_W',
-  BROIL = '@OV_TERM_BROIL_W',
-  WARM = '@OV_TERM_WARM_W',
-  PROOF = '@OV_TERM_PROOF_W',
-  FROZEN_MEAL = '@OV_TERM_FROZEN_MEAL_W',
-  SLOW_COOK = '@OV_TERM_SLOW_COOK_W',
-  PROBE_SET = '@OV_TERM_PROBE_SET_W',
-  EASY_CLEAN = '@OV_TERM_EASY_CLEAN_W',
-  SPEED_BROIL = '@OV_TERM_SPEED_BROIL_W',
-  SELF_CLEAN = '@OV_TERM_SELF_CLEAN_W',
-  SPEED_ROAST = '@OV_TERM_SPEED_ROAST_W',
-  AIR_FRY = '@OV_TERM_AIR_FRY_W',
-  PIZZA = '@OV_TERM_PIZZA_W',
-  AIR_SOUSVIDE = '@OV_TERM_AIR_SOUSVIDE_W',
-}
 
 export default class Oven extends baseDevice {
 
@@ -171,8 +149,7 @@ export default class Oven extends baseDevice {
       .on('set', (value, callback) => {
         if (value === 0) {
           this.stopOven();
-        }
-        else {
+        } else {
           this.sendOvenCommand();
         }
         callback(null);
@@ -844,7 +821,6 @@ export default class Oven extends baseDevice {
           }
         }
         this.platform.log.debug('Sending the Folowing Commands: ' + JSON.stringify(this.ovenCommandList));
-        let _a;
         const ctrlKey = 'SetCookStart';
         const device = this.accessory.context.device;
         this.platform.ThinQ?.deviceControl(device.id, {
@@ -1121,20 +1097,16 @@ export default class Oven extends baseDevice {
     if (this.Status.data?.upperCurrentTemperatureValue != 0) {
       if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.upperCurrentTemperatureValue);
-      }
-      else {
+      } else {
         return 0.5 * Math.round(2 * this.Status.data?.upperCurrentTemperatureValue);
       }
-    }
-    else if (this.Status.data?.upperCurrentTemperatureValue == 0 && this.Status.data?.upperTargetTemperatureValue != 0) {
+    } else if (this.Status.data?.upperCurrentTemperatureValue == 0 && this.Status.data?.upperTargetTemperatureValue != 0) {
       if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.upperTargetTemperatureValue);
-      }
-      else {
+      } else {
         return 0.5 * Math.round(2 * this.Status.data?.upperTargetTemperatureValue);
       }
-    }
-    else {
+    } else {
       return this.localTemperature;
     }
   }
@@ -1144,12 +1116,10 @@ export default class Oven extends baseDevice {
     if (this.Status.data?.upperTargetTemperatureValue != 0) {
       if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.upperTargetTemperatureValue);
-      }
-      else {
+      } else {
         return 0.5 * Math.round(2 * this.Status.data?.upperTargetTemperatureValue);
       }
-    }
-    else {
+    } else {
       return 38;
     }
   }
@@ -1330,8 +1300,7 @@ export default class Oven extends baseDevice {
         if (this.Status.data.upperTargetProveTemperatureF !== 0 && typeof this.Status.data.upperTargetProveTemperatureF !== 'undefined') {
           this.probeName += ' With Set Temp ' + this.Status.data.upperTargetProveTemperatureF + '°';
         }
-      }
-      else {
+      } else {
         this.probeName += 'Current Probe Temp ' + this.tempFtoC(this.Status.data.upperCurrentProveTemperatureF) + '°';
         if (this.Status.data.upperTargetProveTemperatureF !== 0 && typeof this.Status.data.upperTargetProveTemperatureF !== 'undefined') {
           this.probeName += ' With Set Temp ' + this.tempFtoC(this.Status.data.upperTargetProveTemperatureF) + '°';

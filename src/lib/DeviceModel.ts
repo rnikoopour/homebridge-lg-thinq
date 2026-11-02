@@ -306,7 +306,7 @@ export class DeviceModel {
 
     try {
       return JSON.parse(data.toString());
-    } catch (err) {
+    } catch {
       return data;
     }
   }

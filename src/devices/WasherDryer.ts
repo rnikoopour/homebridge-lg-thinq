@@ -1,6 +1,6 @@
 import {baseDevice} from '../baseDevice';
 import {LGThinQHomebridgePlatform} from '../platform';
-import {CharacteristicValue, Perms, PlatformAccessory} from 'homebridge';
+import {CharacteristicValue, PlatformAccessory} from 'homebridge';
 import {Device} from '../lib/Device';
 import {PlatformType} from '../lib/constants';
 import {DeviceModel} from '../lib/DeviceModel';
@@ -81,7 +81,7 @@ export default class WasherDryer extends baseDevice {
       }
 
       this.serviceEventFinished.setCharacteristic(Characteristic.Name, 'Program Finished');
-      // eslint-disable-next-line max-len
+
       this.serviceEventFinished.updateCharacteristic(Characteristic.OccupancyDetected, Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
     } else if (this.serviceEventFinished) {
       accessory.removeService(this.serviceEventFinished);
@@ -95,7 +95,7 @@ export default class WasherDryer extends baseDevice {
       }
 
       this.serviceTubCleanMaintenance.setCharacteristic(Characteristic.Name, 'Tub Clean Coach');
-      // eslint-disable-next-line max-len
+
       this.serviceTubCleanMaintenance.updateCharacteristic(Characteristic.OccupancyDetected, Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED);
 
       this.serviceTubCleanMaintenance.setCharacteristic(Characteristic.Name, 'Tub Clean Coach');
@@ -120,7 +120,7 @@ export default class WasherDryer extends baseDevice {
     }, super.config);
   }
 
-  async setActive(value: CharacteristicValue) {
+  async setActive(_value: CharacteristicValue) {
     // do nothing, revert back
     this.updateAccessoryCharacteristic(this.accessory.context.device);
   }

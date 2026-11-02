@@ -11,7 +11,7 @@ export default function RefState(deviceModel: DeviceModel, decodedMonitor) {
     refState: {
       fridgeTemp: decodedMonitor['TempRefrigerator'] || deviceModel.default('TempRefrigerator') || '0',
       freezerTemp: decodedMonitor['TempFreezer'] || deviceModel.default('TempFreezer') || '0',
-      // eslint-disable-next-line max-len
+
       atLeastOneDoorOpen: lookupEnumIndex(DoorOpenState, loopupEnum(deviceModel, decodedMonitor, 'DoorOpenState') || deviceModel.default('DoorOpenState')),
       tempUnit: parseInt(decodedMonitor['TempUnit'] || deviceModel.default('TempUnit')) ? 'CELSIUS' : 'FAHRENHEIT',
     },

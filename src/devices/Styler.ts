@@ -1,6 +1,6 @@
 import {baseDevice} from '../baseDevice';
 import {LGThinQHomebridgePlatform} from '../platform';
-import {CharacteristicValue, Perms, PlatformAccessory} from 'homebridge';
+import {CharacteristicValue, PlatformAccessory} from 'homebridge';
 import {Device} from '../lib/Device';
 import {DeviceModel} from '../lib/DeviceModel';
 
@@ -54,7 +54,7 @@ export default class Styler extends baseDevice {
       this.Status.isError ? Characteristic.StatusFault.GENERAL_FAULT : Characteristic.StatusFault.NO_FAULT);
   }
 
-  async setActive(value: CharacteristicValue) {
+  async setActive(_value: CharacteristicValue) {
     if (this.Status.isRemoteStartOn) {
       // turn on styler
     }

@@ -1,12 +1,18 @@
 # Change Log
 
+## v2.2.3
+
+* Docs: the README now covers sign-in options and every per-device option, replacing links to the upstream wiki; install from npm.
+* The settings screen links to this README instead of the upstream wiki.
+* The npm package no longer includes tests, sample data or lint config.
+
 ## v2.2.2
 
 * Fix: errors that could restart the whole Homebridge child bridge are now caught and logged (Homebridge shuts the bridge down on any uncaught exception, including unhandled promise rejections):
   * a device command that fails (network error, LG API error) on any appliance;
   * an MQTT message that is not valid JSON, or that a device fails to apply;
   * a failed MQTT reconnect (it now keeps retrying every 60 seconds instead of giving up);
-  * a failed 5-minute backup poll, or a failed device unregister.
+  * a failed backup poll, or a failed device unregister.
 * ThinQ1 polling errors other than "manual process needed" are now logged instead of silently ignored.
 * `@typescript-eslint/no-floating-promises` and `no-misused-promises` are now lint errors.
 

@@ -6,7 +6,7 @@
 
 # Homebridge LG ThinQ
 
-> **Maintained fork** by [rnikoopour](https://github.com/rnikoopour) of [nVuln/homebridge-lg-thinq](https://github.com/nVuln/homebridge-lg-thinq) (Apache-2.0), based on upstream v1.8.11. See [CHANGELOG.md](CHANGELOG.md) for what changed. Install from this repo's [releases](https://github.com/rnikoopour/homebridge-lg-thinq/releases), not npm.
+> **Maintained fork** by [rnikoopour](https://github.com/rnikoopour) of [nVuln/homebridge-lg-thinq](https://github.com/nVuln/homebridge-lg-thinq) (Apache-2.0), based on upstream v1.8.11. See [CHANGELOG.md](CHANGELOG.md) for what changed. Published to npm as [`@rnikoopour/homebridge-lg-thinq`](https://www.npmjs.com/package/@rnikoopour/homebridge-lg-thinq).
 
 ## Overview
 
@@ -49,9 +49,9 @@ The `LGThinQ` platform config is unchanged.
 
 # Configuration
 
-> ✔️ I highly recommend using [homebridge-config-ui-x](https://github.com/oznu/homebridge-config-ui-x#readme) to make these changes.
+> ✔️ I highly recommend using [homebridge-config-ui-x](https://github.com/homebridge/homebridge-config-ui-x#readme) to make these changes.
 
-1. Navigate to the Plugins page in [homebridge-config-ui-x](https://github.com/oznu/homebridge-config-ui-x).
+1. Navigate to the Plugins page in [homebridge-config-ui-x](https://github.com/homebridge/homebridge-config-ui-x).
 2. Click the **Settings** button for the LG ThinQ plugin.
 3. Login to your LG account
 4. Add or remove which devices you want
@@ -82,17 +82,50 @@ The `LGThinQ` platform config is unchanged.
 - `password` Required if `auth_mode` = `account`. LG thinQ password
 - `country` Required. Your account [country alpha-2 code](https://www.countrycode.org/), e.g., US for the USA.
 - `language` Required. Your account language code, e.g., en-US, vi-VN.
-- `devices` List devices you want add to homebridge, leave it empty if you want add all devices. See [Wiki](https://github.com/nVuln/homebridge-lg-thinq/wiki/Wiki) for specific device configuration.
+- `devices` List devices you want add to homebridge, leave it empty if you want add all devices. See [Device configuration](#device-configuration).
 - `thinq1` Optional. Enable thinq1 device support
+- `refresh_interval` Optional. Seconds between status polls (default 5): ThinQ1 devices rely on this polling, ThinQ2 devices use it as a backup to real-time updates. Keep it above 30 with ThinQ1 devices, or LG may block the account.
 - `platform` value always `LGThinQ`
 
 ## Plugin Authorization Setting
 
-* See [Wiki - Plugin Authorization Setting](https://github.com/nVuln/homebridge-lg-thinq/wiki/Plugin-Authorization-Setting)
+The plugin signs in with an LG account username and password.
 
-## Device specific configuration
+If your LG account uses Google, Apple or Facebook sign-in, create a second LG
+account with a username and password (it can use the same email; LG treats them
+as separate accounts), share your home with it from the LG ThinQ app, and use the
+second account in the plugin settings.
 
-* See [Wiki - Device Configuration](https://github.com/nVuln/homebridge-lg-thinq/wiki/Device-Configuration)
+To avoid storing a password, use `auth_mode: "token"` with a `refresh_token`
+obtained from the bundled CLI (see [CLI Usage](#cli-usage)):
+
+```
+$ thinq login <username> <password> -c US -l en-US
+Your refresh_token: ...
+```
+
+## Device configuration
+
+Each entry in `devices` takes `id` (required) and `name` (optional, overrides the
+LG app name). Device-specific options, all off unless noted:
+
+| Device | Option | Description |
+| --- | --- | --- |
+| Washer / Dryer / WashTower | `washer_trigger` | "Program Finished" occupancy sensor for automations |
+| | `washer_door_lock` | Door lock status |
+| | `washer_tub_clean` | Tub clean event |
+| Dishwasher | `dishwasher_trigger` | "Program Finished" occupancy sensor |
+| Air conditioner | `ac_mode` | `COOLING`, `HEATING` or `BOTH` (default) |
+| | `ac_swing_mode` | `VERTICAL`, `HORIZONTAL` or `BOTH` (on/off only) |
+| | `ac_air_quality` | Air quality sensor, if supported |
+| | `ac_temperature_sensor` / `ac_humidity_sensor` | Separate sensors for automations |
+| | `ac_led_control` / `ac_fan_control` / `ac_jet_control` | Extra controls, if supported |
+| | `ac_energy_save` / `ac_air_clean` | Switches (default on) |
+| | `ac_temperature_unit` | `C` or `F` |
+| | `ac_buttons` | Extra mode buttons: `[{"name": "Dry", "op_mode": 1}]` |
+| Refrigerator | `ref_express_freezer` / `ref_express_fridge` / `ref_eco_friendly` | Switches |
+| Air purifier | `air_fast_mode` | Fast mode switch |
+| Range | `burners_name` | Name of the separate cooktop Burners accessory (default "Burners") |
 
 ## Implementation Status
 

@@ -223,11 +223,15 @@ async function captureHapWarnings(fn) {
   return warnings.filter(w => /illegal value/i.test(w));
 }
 
-test('oven: target temperature stays within the declared range when LG reports less', async () => {
-  const { accessory } = await buildOven(null); // fixture reports a target of 10 while off
+test('oven: no illegal-value warnings at setup or on reads, though LG reports a target below the range', async () => {
   const illegal = await captureHapWarnings(async () => {
-    for (const service of accessory.services.filter(s => s.UUID === Service.Thermostat.UUID)) {
-      await service.getCharacteristic(Characteristic.TargetTemperature).handleGetRequest();
+    const { accessory } = await buildOven(null); // fixture reports a target of 10 while off
+    for (const service of accessory.services) {
+      for (const characteristic of service.characteristics) {
+        if (characteristic.props.perms.includes('pr')) {
+          await characteristic.handleGetRequest();
+        }
+      }
     }
   });
   assert.deepEqual(illegal, []);

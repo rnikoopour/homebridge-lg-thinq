@@ -24,6 +24,13 @@ Search for `@rnikoopour/homebridge-lg-thinq` in the Homebridge UI, or:
 npm i -g @rnikoopour/homebridge-lg-thinq
 ```
 
+### LG terms of service
+
+When LG publishes new terms for your account, the plugin accepts them automatically
+so the integration keeps working (it logs "Handling new term agreement..." when it
+does). If LG still returns no devices afterwards, cached accessories are kept rather
+than removed; open the LG ThinQ app and restart Homebridge.
+
 ### Migrating from `homebridge-lg-thinq`
 
 The package name changed, so Homebridge would treat existing accessories as new

@@ -1,5 +1,15 @@
 # Change Log
 
+## v2.1.0
+
+* Requires Homebridge 2 and Node.js 22.12+ (same as Homebridge core).
+* Removed the unused `homebridge-config-ui-x` dependency and updated axios, axios-retry, plugin-ui-utils, luxon, qs and node-forge; `uuid` replaced by `node:crypto`. Production audit: 36 advisories (4 critical, 22 high) down to 5 moderate in mqtt's CLI tooling.
+* Fixed oven and microwave cooking-mode switches, which compared instead of setting the mode, so selecting a mode never took effect.
+* Fixed setup crashes when LG sends a status without a section (washer door lock, refrigerator modes, dishwasher state).
+* All characteristic handlers use Homebridge's `onGet`/`onSet`.
+* Added tests (node:test with the real HAP-NodeJS library) and CI on Node 22/24/26; releases are published from version tags.
+* Removed the upstream maintainer's donation link from the repository.
+
 ## v2.0.0
 
 * Published as `@rnikoopour/homebridge-lg-thinq` (rnikoopour's maintained fork of nVuln/homebridge-lg-thinq, based on 1.8.11). Breaking: the package name changed. Existing installs of `homebridge-lg-thinq` keep their accessories only if the cached accessories are relabelled to the new plugin name before the first start (see README).

@@ -112,6 +112,42 @@ test('finish: dryer cooldown counts as the end, without a second alert at END', 
   assert.deepEqual(events, ['started@DRYING', 'finished@COOLDOWN']);
 });
 
+// Sequences below use the state names from real LG washer/dryer models.
+const drying = (minutes) => ({ state: 'DRYING', remainTimeMinute: minutes });
+
+test('real dryer: COOLING is still the program; END fires once; wrinkle care afterwards does not re-trigger', () => {
+  assert.deepEqual(run([drying(50), { state: 'COOLING', remainTimeMinute: 5 }, 'END', 'WRINKLECARE', 'WRINKLECARE', 'END', 'POWEROFF']).events,
+    ['started@DRYING', 'finished@END']);
+});
+
+test('real dryer: wrinkle care without an END report counts as the finish', () => {
+  assert.deepEqual(run([drying(50), { state: 'COOLING', remainTimeMinute: 3 }, 'WRINKLECARE', 'POWEROFF']).events,
+    ['started@DRYING', 'finished@WRINKLECARE']);
+});
+
+test('real washer: a delayed start is not running until it starts', () => {
+  const view = washerDryerView({ state: 'RESERVED', remainTimeHour: 2 });
+  assert.equal(view.powerOn, true);
+  assert.equal(view.running, false);
+  assert.deepEqual(run(['RESERVED', 'RESERVED', 'DETECTING', running(55), 'END']).events, ['started@DETECTING', 'finished@END']);
+});
+
+test('real washer: freeze prevention is not a program and never alerts', () => {
+  assert.deepEqual(run(['POWEROFF', 'FROZEN_PREVENT_INITIAL', 'FROZEN_PREVENT_RUNNING', 'FROZEN_PREVENT_PAUSE', 'POWEROFF']).events, []);
+});
+
+test('real washer: rinse hold and auto door-open pause are pauses, not stops', () => {
+  assert.deepEqual(run([running(40), { state: 'RINSING', remainTimeMinute: 20 }, 'RINSEHOLD', 'POWEROFF']).events, ['started@RUNNING']);
+  assert.deepEqual(run([running(40), 'RINSEHOLD', { state: 'SPINNING', remainTimeMinute: 8 }, 'AUTO_DT_OPEN_PAUSE', 'END']).events,
+    ['started@RUNNING', 'finished@END']);
+});
+
+test('real washer: refresh tumbling after END does not re-trigger; auto-off error is an error, not a finish', () => {
+  assert.deepEqual(run([running(40), 'END', 'REFRESHING', 'REFRESHING', 'POWEROFF']).events, ['started@RUNNING', 'finished@END']);
+  assert.deepEqual(run([running(40), 'ERROR_AUTO_OFF']).events, ['started@RUNNING']);
+  assert.equal(washerDryerView({ state: 'ERROR_AUTO_OFF' }).error, true);
+});
+
 test('finish: back-to-back programs each fire once', () => {
   const { events } = run([running(30), 'END', running(30), 'END']);
   assert.deepEqual(events, ['started@RUNNING', 'finished@END', 'started@RUNNING', 'finished@END']);

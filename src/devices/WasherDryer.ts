@@ -54,7 +54,7 @@ export default class WasherDryer extends baseDevice {
 
     // only thinq2 support door lock status
     this.serviceDoorLock = accessory.getService(LockMechanism);
-    if (this.config.washer_door_lock && device.platform === PlatformType.ThinQ2 && 'doorLock' in device.snapshot?.washerDryer) {
+    if (this.config.washer_door_lock && device.platform === PlatformType.ThinQ2 && 'doorLock' in (device.snapshot?.washerDryer ?? {})) {
       if (!this.serviceDoorLock) {
         this.serviceDoorLock = accessory.addService(LockMechanism, device.name + ' - Door');
       }

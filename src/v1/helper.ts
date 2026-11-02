@@ -5,7 +5,7 @@ import AirState from './transforms/AirState';
 import WasherDryer from './transforms/WasherDryer';
 import {Washer, AC, Refrigerator, AirPurifier, RangeHood} from './devices';
 import RefState from './transforms/RefState';
-import * as uuid from 'uuid';
+import { randomUUID } from 'node:crypto';
 import AirPurifierState from './transforms/AirPurifierState';
 import HoodState from './transforms/HoodState';
 
@@ -69,7 +69,7 @@ export default class Helper {
       cmd: 'Control',
       cmdOpt: 'Set',
       deviceId: device.id,
-      workId: uuid.v4(),
+      workId: randomUUID(),
     };
 
     if (device.deviceModel.data.ControlWifi?.type === 'BINARY(BYTE)') {

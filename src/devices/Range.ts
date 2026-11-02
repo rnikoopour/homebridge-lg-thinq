@@ -8,12 +8,11 @@ const REVERT_MS = 500;
 
 /**
  * The cooktop burners of an LG range, published as their own "Burners" accessory next
- * to the oven. Main switch: any burner on. One switch per burner, bundled under it.
- * LG does not allow controlling burners remotely, so the switches are read-only
+ * to the oven: one switch per burner (the Home app groups them and shows how many are
+ * on). LG does not allow controlling burners remotely, so the switches are read-only
  * (taps revert).
  */
 export default class Range extends baseDevice {
-  protected mainSwitch;
   protected burnerSwitches = new Map<number, ReturnType<PlatformAccessory['addService']>>();
 
   constructor(
@@ -21,12 +20,13 @@ export default class Range extends baseDevice {
     public readonly accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
-    const {Service: {Switch}, Characteristic} = this.platform;
+    const {Service: {Switch}} = this.platform;
 
-    this.mainSwitch = this.accessory.getService('Burners') || this.accessory.addService(Switch, 'Burners', 'burners');
-    this.mainSwitch.setPrimaryService(true);
-    this.mainSwitch.setCharacteristic(Characteristic.Name, this.accessory.displayName);
-    this.readOnly(this.mainSwitch, () => this.view.on);
+    // An earlier test build published an extra "any burner on" switch.
+    const anyBurner = this.accessory.getServiceById(Switch, 'burners');
+    if (anyBurner) {
+      this.accessory.removeService(anyBurner);
+    }
 
     for (const burner of this.view.burners) {
       const service = this.accessory.getService(burner.name) || this.accessory.addService(Switch, burner.name, `burner${burner.index}`);
@@ -50,12 +50,11 @@ export default class Range extends baseDevice {
 
   updateAccessoryCharacteristic(device) {
     super.updateAccessoryCharacteristic(device);
-    if (!this.mainSwitch) {
+    if (!this.burnerSwitches) {
       return;
     }
     const {Characteristic} = this.platform;
     const view = this.view;
-    this.mainSwitch.updateCharacteristic(Characteristic.On, view.on);
     for (const burner of view.burners) {
       this.burnerSwitches.get(burner.index)?.updateCharacteristic(Characteristic.On, burner.on);
     }

@@ -264,7 +264,7 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
       if (device.type === 'OVEN') {
         const deviceConfig = this.config.devices.find(enabled => enabled.id === device.id);
         this.restoreOrAddAccessory(device, this.api.hap.uuid.generate(device.id + ':burners'),
-          deviceConfig?.burners_name || 'Burners', Range, accessoriesToRemoveUUID, true);
+          deviceConfig?.burners_name || 'Burners', Range, accessoriesToRemoveUUID, false);
       }
     }
 

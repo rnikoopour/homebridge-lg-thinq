@@ -3,6 +3,7 @@
  */
 import {baseDevice} from '../baseDevice';
 import {DeviceModel} from '../lib/DeviceModel';
+import {hmsSeconds} from './programTracking';
 import {LGThinQHomebridgePlatform} from '../platform';
 import {PlatformAccessory, Service} from 'homebridge';
 
@@ -184,7 +185,7 @@ export default class Microwave extends baseDevice {
     this.microwavePower.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Microwave Power');
     this.microwavePower.getCharacteristic(this.platform.Characteristic.On)
       .onSet((value) => {
-        if (value == false) {
+        if (!value) {
           this.mwPower = 0;
         } else {
           this.mwPower = 100;
@@ -410,13 +411,13 @@ export default class Microwave extends baseDevice {
     this.ovenTimerService.getCharacteristic(Characteristic.Active)
       .onGet(() => {
         let currentValue = 0;
-        if (this.remainTime() != 0) {
+        if (this.remainTime() !== 0) {
           currentValue = 1;
         }
         return currentValue;
       })
       .onSet((value) => {
-        if (value == 0) {
+        if (value === 0) {
           this.stopOven();
           this.ovenTimerService.updateCharacteristic(Characteristic.Active, 0);
           this.ovenTimerService.updateCharacteristic(Characteristic.RemainingDuration, 0);
@@ -459,13 +460,13 @@ export default class Microwave extends baseDevice {
     this.ovenAlarmService.getCharacteristic(Characteristic.Active)
       .onGet(() => {
         let currentValue = 0;
-        if (this.ovenTimerTime() != 0) {
+        if (this.ovenTimerTime() !== 0) {
           currentValue = 1;
         }
         return currentValue;
       })
       .onSet((value) => {
-        if (value == 0) {
+        if (value === 0) {
           this.timerAlarmSec = 0;
           this.sendTimerCommand(0);
           this.ovenAlarmService.updateCharacteristic(Characteristic.Active, 0);
@@ -743,7 +744,7 @@ export default class Microwave extends baseDevice {
         return currentValue;
       })
       .onSet((value) => {
-        if (value == 0) {
+        if (value === 0) {
           this.stopOven();
         } else {
           this.pauseUpdate = true;
@@ -877,7 +878,7 @@ export default class Microwave extends baseDevice {
         if (this.ovenCommandList.ovenMode === 'NONE') {
           this.ovenCommandList.ovenMode = 'WARM';
         }
-        if (this.ovenCommandList.ovenSetDuration == 0) {
+        if (this.ovenCommandList.ovenSetDuration === 0) {
           this.ovenCommandList.ovenSetDuration = 300;
         }
         if (this.ovenCommandList.ovenMode.includes('COMBI_BAKE') || this.ovenCommandList.ovenMode.includes('CONV_BAKE') || this.ovenCommandList.ovenMode.includes('COMBI_ROAST') || this.ovenCommandList.ovenMode.includes('OVEN')) {
@@ -947,7 +948,7 @@ export default class Microwave extends baseDevice {
 
         } else if (this.ovenCommandList.ovenMode.includes('MICROWAVE')) {
           this.ovenCommandList.subCookNumber = 0;
-          if (this.mwPower == 0) {
+          if (this.mwPower === 0) {
             this.ovenCommandList.microwavePower = '100';
           } else {
             this.ovenCommandList.microwavePower = this.mwPower.toString();
@@ -1030,7 +1031,7 @@ export default class Microwave extends baseDevice {
                 'setMwoPowerLevel': this.ovenCommandList.microwavePower,
                 'setTargetSteamLevel': 'NONE',
                 'setTargetTemp': this.ovenCommandList.ovenSetTemperature,
-                'setTargetTempLevel': this.ovenCommandList.ovenMode == 'WARM' ? 'HIGH' : 0,
+                'setTargetTempLevel': this.ovenCommandList.ovenMode === 'WARM' ? 'HIGH' : 0,
                 'setTargetWeight': this.ovenCommandList.targetWeight,
                 'setWarmType': 'NONE',
               },
@@ -1103,7 +1104,7 @@ export default class Microwave extends baseDevice {
   }
 
   lightVentState() {
-    if (!this.Status.data?.LWOState?.includes('INITIAL') || this.Status.data?.mwoVentSpeedLevel != 0 || this.Status.data?.mwoLampLevel != 0) {
+    if (!this.Status.data?.LWOState?.includes('INITIAL') || Number(this.Status.data?.mwoVentSpeedLevel) !== 0 || Number(this.Status.data?.mwoLampLevel) !== 0) {
       return true;
     } else {
       return false;
@@ -1125,18 +1126,8 @@ export default class Microwave extends baseDevice {
   }
 
   remainTime() {
-    let remainingDuration = 0;
-    if (typeof this.Status.data?.LWORemainTimeHour !== 'undefined') {
-      remainingDuration += this.Status.data?.LWORemainTimeHour * 3600;
-    }
-    if (typeof this.Status.data?.LWORemainTimeMinute !== 'undefined') {
-      remainingDuration += this.Status.data?.LWORemainTimeMinute * 60;
-    }
-
-    if (typeof this.Status.data?.LWORemainTimeSecond !== 'undefined') {
-      remainingDuration += this.Status.data?.LWORemainTimeSecond;
-    }
-    return remainingDuration;
+    const data = this.Status.data;
+    return hmsSeconds(data?.LWORemainTimeHour, data?.LWORemainTimeMinute, data?.LWORemainTimeSecond);
   }
 
   ovenModeName() {
@@ -1285,7 +1276,7 @@ export default class Microwave extends baseDevice {
     }
 
     ////Default
-    if (this.Status.data.LWOTargetTemperatureValue === 0 && this.defaultTemp != 0 && this.Status.data.upperCurrentTemperatureValue === 0) {
+    if (this.Status.data.LWOTargetTemperatureValue === 0 && this.defaultTemp !== 0 && this.Status.data.upperCurrentTemperatureValue === 0) {
       temperature += 'Current Temp is ' + this.defaultTemp + '°' + ' With Set Temp ' + this.defaultTemp + '°';
     }
 
@@ -1294,7 +1285,7 @@ export default class Microwave extends baseDevice {
 
   ovenCurrentTemperature() {
     /////Current Temp
-    if (this.Status.data?.upperCurrentTemperatureValue != 0) {
+    if (Number(this.Status.data?.upperCurrentTemperatureValue) !== 0) {
       if (this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.upperCurrentTemperatureValue);
       } else {
@@ -1317,7 +1308,7 @@ export default class Microwave extends baseDevice {
 
   ovenTargetTemperature() {
     ////Set temperature
-    if (this.Status.data?.LWOTargetTemperatureValue != 0) {
+    if (Number(this.Status.data?.LWOTargetTemperatureValue) !== 0) {
       if (this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.LWOTargetTemperatureValue);
       } else {
@@ -1333,8 +1324,7 @@ export default class Microwave extends baseDevice {
   }
 
   OvenSubCookMenu(name) {
-    if (this.Status.data?.LWOSubCookName !=
-      0 && typeof this.Status.data?.LWOSubCookName !== 'undefined') {
+    if (Number(this.Status.data?.LWOSubCookName) !== 0 && typeof this.Status.data?.LWOSubCookName !== 'undefined') {
       let subCookCap: string;
       switch (this.Status.data?.LWOSubCookName) {
         case 3335:
@@ -1400,33 +1390,13 @@ export default class Microwave extends baseDevice {
   }
 
   oventTargetTime() {
-    let setDuration = 0;
-    if (typeof this.Status.data?.LWOTargetTimeHour !== 'undefined') {
-      setDuration += this.Status.data?.LWOTargetTimeHour * 3600;
-    }
-    if (typeof this.Status.data?.LWOTargetTimeMinute !== 'undefined') {
-      setDuration += this.Status.data?.LWOTargetTimeMinute * 60;
-    }
-
-    if (typeof this.Status.data?.LWOTargetTimeSecond !== 'undefined') {
-      setDuration += this.Status.data?.LWOTargetTimeSecond;
-    }
-    return setDuration;
+    const data = this.Status.data;
+    return hmsSeconds(data?.LWOTargetTimeHour, data?.LWOTargetTimeMinute, data?.LWOTargetTimeSecond);
   }
 
   ovenTimerTime() {
-    let remainTimer = 0;
-    if (typeof this.Status.data?.LWOTimerHour !== 'undefined') {
-      remainTimer += this.Status.data?.LWOTimerHour * 3600;
-    }
-    if (typeof this.Status.data?.LWOTimerMinute !== 'undefined') {
-      remainTimer += this.Status.data?.LWOTimerMinute * 60;
-    }
-
-    if (typeof this.Status.data?.LWOTimerSecond !== 'undefined') {
-      remainTimer += this.Status.data?.LWOTimerSecond;
-    }
-    return remainTimer;
+    const data = this.Status.data;
+    return hmsSeconds(data?.LWOTimerHour, data?.LWOTimerMinute, data?.LWOTimerSecond);
   }
 
   tempCtoF(temp) {
@@ -1451,7 +1421,7 @@ export default class Microwave extends baseDevice {
     if (this.oventTargetTime() > 3600) {
       hourMinutes = 'Hours';
     }
-    if (this.oventTargetTime() == 3600) {
+    if (this.oventTargetTime() === 3600) {
       hourMinutes = 'Hour';
 
     }
@@ -1470,7 +1440,7 @@ export default class Microwave extends baseDevice {
     if (this.ovenTimerTime() > 3600) {
       hourMinutes = 'Hours';
     }
-    if (this.ovenTimerTime() == 3600) {
+    if (this.ovenTimerTime() === 3600) {
       hourMinutes = 'Hour';
 
     }
@@ -1530,7 +1500,7 @@ export default class Microwave extends baseDevice {
 
   ///////////
   currentHeatingState() {
-    if (this.Status.data?.upperCurrentTemperatureValue != 0 || this.defaultTemp !== 0 || this.Status.data.LWOTargetTemperatureValue !== 0) {
+    if (Number(this.Status.data?.upperCurrentTemperatureValue) !== 0 || this.defaultTemp !== 0 || this.Status.data.LWOTargetTemperatureValue !== 0) {
       return 1;
     } else {
       return 0;
@@ -1551,16 +1521,16 @@ export default class Microwave extends baseDevice {
   }
 
   updateOvenModeSwitchNoPause() {
-    this.microwaveSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode == 'MICROWAVE' ? true : false);
-    this.combiBakeSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode == 'COMBI_BAKE' ? true : false);
-    this.dehydrateSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode == 'DEHYDRATE' ? true : false);
-    this.airFrySwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode == 'AIRFRY' ? true : false);
-    this.proofSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode == 'PROOF' ? true : false);
-    this.warmModeSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode == 'WARM' ? true : false);
-    this.convectionBakeSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode == 'CONV_BAKE' ? true : false);
-    this.convectionRoastSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode == 'COMBI_ROAST' ? true : false);
-    this.defrostSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode == 'INVERTER_DEFROST' ? true : false);
-    this.frozenMealSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode == 'TIME_DEFROST' ? true : false);
+    this.microwaveSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode === 'MICROWAVE');
+    this.combiBakeSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode === 'COMBI_BAKE');
+    this.dehydrateSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode === 'DEHYDRATE');
+    this.airFrySwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode === 'AIRFRY');
+    this.proofSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode === 'PROOF');
+    this.warmModeSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode === 'WARM');
+    this.convectionBakeSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode === 'CONV_BAKE');
+    this.convectionRoastSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode === 'COMBI_ROAST');
+    this.defrostSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode === 'INVERTER_DEFROST');
+    this.frozenMealSwitch.updateCharacteristic(this.platform.Characteristic.On, this.ovenCommandList.ovenMode === 'TIME_DEFROST');
   }
 
   getOperationTime(timeInSeconds) {
@@ -1575,7 +1545,7 @@ export default class Microwave extends baseDevice {
     if (timeInSeconds > 3600) {
       hourMinutes = 'Hours';
     }
-    if (timeInSeconds == 3600) {
+    if (timeInSeconds === 3600) {
       hourMinutes = 'Hour';
 
     }
@@ -1584,12 +1554,12 @@ export default class Microwave extends baseDevice {
 
   lightVentStatus() {
     let lightVent = '';
-    if (this.Status.data?.mwoLampLevel == 0) {
+    if (Number(this.Status.data?.mwoLampLevel) === 0) {
 
       lightVent = 'Light is Off';
-    } else if (this.Status.data?.mwoLampLevel == 1) {
+    } else if (Number(this.Status.data?.mwoLampLevel) === 1) {
       lightVent = 'Light is set to Low';
-    } else if (this.Status.data?.mwoLampLevel == 2) {
+    } else if (Number(this.Status.data?.mwoLampLevel) === 2) {
       lightVent = 'Light is set to High';
     }
     if (this.Status.data?.mwoVentSpeedLevel > 0) {
@@ -1601,7 +1571,7 @@ export default class Microwave extends baseDevice {
   }
 
   ovenServiceActive() {
-    if (this.Status.data?.LWOState?.includes('INITIAL') && this.Status.data?.mwoVentSpeedLevel == 0 && this.Status.data?.mwoLampLevel == 0) {
+    if (this.Status.data?.LWOState?.includes('INITIAL') && Number(this.Status.data?.mwoVentSpeedLevel) === 0 && Number(this.Status.data?.mwoLampLevel) === 0) {
       return 0;
     } else {
       return 1;
@@ -1623,10 +1593,10 @@ export default class Microwave extends baseDevice {
       if (this.Status.data?.LWOState?.includes('INITIAL')) {
         this.defaultTemp = 0;
       }
-      if (this.ovenService.getCharacteristic(this.platform.Characteristic.Active).value != this.ovenServiceActive()) {
+      if (this.ovenService.getCharacteristic(this.platform.Characteristic.Active).value !== this.ovenServiceActive()) {
         this.ovenService.updateCharacteristic(this.platform.Characteristic.Active, this.ovenServiceActive());
       }
-      if (this.ovenServiceActive() == 0) {
+      if (this.ovenServiceActive() === 0) {
         this.ovenCommandList = { ovenMode: 'NONE', ovenSetTemperature: 0, tempUnits: this.Status.data?.LWOTargetTemperatureUnit, ovenSetDuration: 0, subCookNumber: 0, weightUnits: 'KG', microwavePower: '100', targetWeight: 0 };
 
         if (this.microwaveSwitch.getCharacteristic(this.platform.Characteristic.On).value === true ||
@@ -1668,8 +1638,8 @@ export default class Microwave extends baseDevice {
         this.courseTimeString = 'Microwave Cooking Time Not Set';
         this.courseTimeEndString = 'Microwave End Time Not Set';
       }
-      if (this.ovenTimerTime() != 0) {
-        if (this.ovenTimerTime() != this.firstDuration) {
+      if (this.ovenTimerTime() !== 0) {
+        if (this.ovenTimerTime() !== this.firstDuration) {
           this.firstTimer = this.ovenTimerTime();
           this.courseTimerString = this.ovenCookingTimer();
         }
@@ -1781,9 +1751,9 @@ export default class Microwave extends baseDevice {
       ///////Timer Monitor
 
       this.ovenTimerService.updateCharacteristic(this.platform.Characteristic.Active, this.remainTime() > 0 ? 1 : 0);
-      if (this.oventTargetTime() == 0) {
+      if (this.oventTargetTime() === 0) {
         this.ovenTimerService.updateCharacteristic(this.platform.Characteristic.InUse, Characteristic.InUse.NOT_IN_USE);
-      } else if (this.onStatus() && this.oventTargetTime() != 0) {
+      } else if (this.onStatus() && this.oventTargetTime() !== 0) {
         this.ovenTimerService.updateCharacteristic(this.platform.Characteristic.InUse, Characteristic.InUse.IN_USE);
       }
 

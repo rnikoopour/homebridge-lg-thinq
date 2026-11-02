@@ -131,10 +131,10 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
   }
 
   /**
-   * Prefix every secondary service's published Name with the appliance name, e.g.
-   * "Program Finished" -> "Washer Program Finished", "Stop Oven" -> "Oven Stop".
-   * Only the Name characteristic changes; service displayName/subtype (used to
-   * find cached services) stay as they are.
+   * Prefix every secondary service's Name and ConfiguredName with the appliance
+   * name, e.g. "Program Finished" -> "Washer Program Finished", "Stop Oven" ->
+   * "Oven Stop". Service displayName/subtype (used to find cached services) stay
+   * as they are.
    */
   private prefixServiceNames(accessory: PlatformAccessory, deviceName: string) {
     const { Service, Characteristic } = this.api.hap;
@@ -151,6 +151,10 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
       if (name !== current) {
         service.setCharacteristic(Characteristic.Name, name);
       }
+      // The Home app labels each part of a multi-service accessory by its
+      // ConfiguredName; without it every part shows the accessory's name.
+      service.addOptionalCharacteristic(Characteristic.ConfiguredName);
+      service.setCharacteristic(Characteristic.ConfiguredName, name);
     }
   }
 
@@ -218,16 +222,6 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
 
         this.log.info('Restoring existing accessory:', device.toString());
         existingAccessory.context.device = device;
-        // Names are published only through Name (like homebridge-pihole); drop any
-        // writable ConfiguredName left in the cache by earlier versions.
-        const configuredNameUUID = this.api.hap.Characteristic.ConfiguredName.UUID;
-        for (const service of existingAccessory.services) {
-          for (const characteristic of [...service.characteristics]) {
-            if (characteristic.UUID === configuredNameUUID) {
-              service.removeCharacteristic(characteristic);
-            }
-          }
-        }
         if (existingAccessory.displayName !== device.name) {
           this.log.info('Updating accessory name:', existingAccessory.displayName, '->', device.name);
           existingAccessory.updateDisplayName(device.name);

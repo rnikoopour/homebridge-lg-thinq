@@ -23,7 +23,7 @@
     "thinq": "./dist/cli.js"
   },
   "scripts": {
-    "lint": "eslint src",
+    "lint": "eslint src test",
     "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc",
     "prepublishOnly": "npm run lint && npm run build",

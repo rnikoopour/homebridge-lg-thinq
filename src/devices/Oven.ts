@@ -309,8 +309,6 @@ export default class Oven extends baseDevice {
     this.ovenTimerService = this.accessory.getService('Oven Cook Time') ||
       this.accessory.addService(this.platform.Service.Valve, 'Oven Cook Time', 'NicoCataGaTa-OvenT2');
     this.ovenTimerService.setCharacteristic(Characteristic.Name, 'Oven Cook Time');
-    this.ovenTimerService.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.ovenTimerService.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Oven Cook Time');
     this.ovenTimerService.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.IRRIGATION);
     this.ovenTimerService.getCharacteristic(Characteristic.Active)
       .on('get', (callback) => {
@@ -357,8 +355,6 @@ export default class Oven extends baseDevice {
       });
     this.ovenAlarmService = this.accessory.getService('Oven Timer') ||
       this.accessory.addService(this.platform.Service.Valve, 'Oven Timer', 'NicoCataGaTa-OvenT32');
-    this.ovenAlarmService.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.ovenAlarmService.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Oven Timer');
     this.ovenAlarmService.setCharacteristic(Characteristic.Name, 'Oven Timer');
     this.ovenAlarmService.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.IRRIGATION);
     this.ovenAlarmService.getCharacteristic(Characteristic.Active)
@@ -411,8 +407,6 @@ export default class Oven extends baseDevice {
     ////////////Buttons
     this.bakeSwitch = accessory.getService('Bake Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Bake Mode', 'CataNicoGaTa-80');
-    this.bakeSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.bakeSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Bake Mode');
     this.bakeSwitch.getCharacteristic(this.platform.Characteristic.On)
       .on('get', (callback) => {
         this.platform.log.debug('Bake Switch Get state');
@@ -429,8 +423,6 @@ export default class Oven extends baseDevice {
 
     this.convectionBakeSwitch = accessory.getService('Convection Bake Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Convection Bake Mode', 'CataNicoGaTa-Control1');
-    this.convectionBakeSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.convectionBakeSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Convection Bake Mode');
     this.convectionBakeSwitch.getCharacteristic(this.platform.Characteristic.On)
       .on('get', (callback) => {
         const currentValue = false;
@@ -446,8 +438,6 @@ export default class Oven extends baseDevice {
 
     this.convectionRoastSwitch = accessory.getService('Convection Roast Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Convection Roast Mode', 'CataNicoGaTa-Control2');
-    this.convectionRoastSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.convectionRoastSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Convection Roast Mode');
     this.convectionRoastSwitch.getCharacteristic(this.platform.Characteristic.On)
       .on('get', (callback) => {
         const currentValue = false;
@@ -463,8 +453,6 @@ export default class Oven extends baseDevice {
 
     this.frozenMealSwitch = accessory.getService('Frozen Meal Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Frozen Meal Mode', 'CataNicoGaTa-Control3');
-    this.frozenMealSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.frozenMealSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Frozen Meal Mode');
     this.frozenMealSwitch.getCharacteristic(this.platform.Characteristic.On)
       .on('get', (callback) => {
         const currentValue = false;
@@ -479,8 +467,6 @@ export default class Oven extends baseDevice {
       });
     this.airFrySwitch = accessory.getService('Air Fry Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Air Fry Mode', 'CataNicoGaTa-Control4');
-    this.airFrySwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.airFrySwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Air Fry Mode');
     this.airFrySwitch.getCharacteristic(this.platform.Characteristic.On)
       .on('get', (callback) => {
         const currentValue = false;
@@ -495,8 +481,6 @@ export default class Oven extends baseDevice {
       });
     this.airSousvideSwitch = accessory.getService('Air Sousvide Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Air Sousvide Mode', 'CataNicoGaTa-Control5');
-    this.airSousvideSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.airSousvideSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Air Sousvide Mode');
     this.airSousvideSwitch.getCharacteristic(this.platform.Characteristic.On)
       .on('get', (callback) => {
         const currentValue = false;
@@ -512,8 +496,6 @@ export default class Oven extends baseDevice {
 
     this.warmModeSwitch = accessory.getService('Proof-Warm Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Proof-Warm Mode', 'CataNicoGaTa-Control5W');
-    this.warmModeSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.warmModeSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Proof-Warm Mode');
     this.warmModeSwitch.getCharacteristic(this.platform.Characteristic.On)
       .on('get', (callback) => {
         const currentValue = false;
@@ -528,8 +510,6 @@ export default class Oven extends baseDevice {
       });
     this.cancelSwitch = accessory.getService('Stop Oven') ||
       accessory.addService(this.platform.Service.Switch, 'Stop Oven', 'CataNicoGaTa-Control6');
-    this.cancelSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.cancelSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Stop Oven');
     this.cancelSwitch.getCharacteristic(this.platform.Characteristic.On)
       .on('get', (callback) => {
         const currentValue = false;
@@ -548,8 +528,6 @@ export default class Oven extends baseDevice {
 
     this.monitorOnlySwitch = accessory.getService('Monitor Only Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Monitor Only Mode', 'CataNicoGaTa-Control7');
-    this.monitorOnlySwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.monitorOnlySwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Monitor Only Mode');
     this.monitorOnlySwitch.getCharacteristic(this.platform.Characteristic.On)
       .on('get', (callback) => {
         if (this.Status.data?.upperRemoteStart.includes('DIS')) {
@@ -566,8 +544,6 @@ export default class Oven extends baseDevice {
 
     this.startOvenSwitch = accessory.getService('Start Oven') ||
       accessory.addService(this.platform.Service.Switch, 'Start Oven', 'CataNicoGaTa-Control8');
-    this.startOvenSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.startOvenSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Start Oven');
     this.startOvenSwitch.getCharacteristic(this.platform.Characteristic.On)
       .on('get', (callback) => {
         const currentValue = false;
@@ -586,8 +562,6 @@ export default class Oven extends baseDevice {
     if ('upperCookAndWarmStatus' in this.Status.data) {
       this.keepWarmSwitch = accessory.getService('Keep Warm') ||
         accessory.addService(this.platform.Service.Switch, 'Keep Warm', 'CataNicoGaTa-Control9');
-      this.keepWarmSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-      this.keepWarmSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Keep Warm');
       this.keepWarmSwitch.getCharacteristic(this.platform.Characteristic.On)
         .on('get', (callback) => {
           const currentValue = !this.Status.data?.upperCookAndWarmStatus?.includes('DIS');
@@ -605,30 +579,22 @@ export default class Oven extends baseDevice {
 
     ////////Door sensor
     this.ovenDoorOpened = this.accessory.getService('Oven Door') || this.accessory.addService(this.platform.Service.ContactSensor, 'Oven Door', 'NicoCataGaTa-OvenTCBCS');
-    this.ovenDoorOpened.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.ovenDoorOpened.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Oven Door');
     this.ovenDoorOpened.setCharacteristic(this.platform.Characteristic.StatusActive, this.onStatus());
     this.ovenDoorOpened.setCharacteristic(this.platform.Characteristic.ContactSensorState, this.Status.data?.upperDoorOpen.includes('DIS') ? 0 : 1);
 
     ///Range Cooking
     this.rangeOn = this.accessory.getService('Range is Cooking') || this.accessory.addService(this.platform.Service.MotionSensor, 'Range is Cooking', 'NicoCataGaTa-OvenTCBCSMotion');
-    this.rangeOn.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.rangeOn.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Range is Cooking');
     this.rangeOn.setCharacteristic(this.platform.Characteristic.StatusActive, this.onStatus());
     this.rangeOn.setCharacteristic(this.platform.Characteristic.MotionDetected, this.onStatus());
 
     ////Remote Enabled
     this.remoteEnabled = this.accessory.getService('Remote Control Enabled') || this.accessory.addService(this.platform.Service.ContactSensor, 'Remote Control Enabled', 'NicoCataGaTa-OvenTCRCS');
-    this.remoteEnabled.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.remoteEnabled.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Remote Control Enabled');
     this.remoteEnabled.setCharacteristic(this.platform.Characteristic.StatusActive, this.onStatus());
     this.remoteEnabled.setCharacteristic(this.platform.Characteristic.ContactSensorState, this.Status.data?.upperRemoteStart.includes('DIS') ? 0 : 1);
     /////////Burners On
 
     this.burnersOnNumber = this.accessory.getService('Number of Burners in Use') ||
       this.accessory.addService(this.platform.Service.LightSensor, 'Number of Burners in Use', 'NicoCataGaTa-OvenTCB');
-    this.burnersOnNumber.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.burnersOnNumber.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Number of Burners in Use');
     this.burnersOnNumber.setCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel, this.Status.data?.burnerOnCounter < 1 ? 0.0001 : this.Status.data?.burnerOnCounter);
     this.burnersOnNumber.setCharacteristic(this.platform.Characteristic.StatusActive, this.Status.data?.burnerOnCounter > 0 ? true : false);
 
@@ -639,11 +605,9 @@ export default class Oven extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.Name, 'Oven Temperature Control')
         .setCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.currentHeatingState())
         .setCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, 1);
-    this.ovenTempControl.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     // Main tile: named after the oven itself.
     this.ovenTempControl.setPrimaryService(true);
     this.ovenTempControl.setCharacteristic(this.platform.Characteristic.Name, this.accessory.context.device.name);
-    this.ovenTempControl.setCharacteristic(this.platform.Characteristic.ConfiguredName, this.accessory.context.device.name);
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
       .setProps({validValues: [this.platform.Characteristic.TargetHeatingCoolingState.OFF, this.platform.Characteristic.TargetHeatingCoolingState.HEAT]})
       .on('get', (callback) => {
@@ -698,8 +662,6 @@ export default class Oven extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.Name, 'Probe Temperature Control')
         .setCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.probeCurrentState())
         .setCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, 1);
-    this.probeTempControl.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.probeTempControl.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Probe Temperature Control');
     this.probeTempControl.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
       .setProps({validValues: [this.platform.Characteristic.TargetHeatingCoolingState.OFF, this.platform.Characteristic.TargetHeatingCoolingState.HEAT]})
       .on('get', (callback) => {

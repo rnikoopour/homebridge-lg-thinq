@@ -2,6 +2,7 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { Helper } from './helper';
+import Range from './devices/Range';
 import {ThinQ} from './lib/ThinQ';
 import {EventEmitter} from 'events';
 import {PlatformType} from './lib/constants';
@@ -164,6 +165,43 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
+  /**
+   * Restore a cached accessory (or add a new one) for a device, wire its handler to
+   * device updates and push the first state. Several accessories may share a device.
+   */
+  private restoreOrAddAccessory(device: Device, uuid: string, name: string, accessoryType,
+    accessoriesToRemoveUUID: string[], bundle: boolean) {
+    let accessory = this.accessories.find(cached => cached.UUID === uuid);
+    if (accessory) {
+      accessoriesToRemoveUUID.splice(accessoriesToRemoveUUID.indexOf(uuid), 1);
+      this.log.info('Restoring existing accessory:', name, '(' + device.toString() + ')');
+      accessory.context.device = device;
+      if (accessory.displayName !== name) {
+        this.log.info('Updating accessory name:', accessory.displayName, '->', name);
+        accessory.updateDisplayName(name);
+        this.api.updatePlatformAccessories([accessory]);
+      }
+    } else {
+      this.log.info('Adding new accessory:', name, '(' + device.toString() + ')');
+      accessory = new this.api.platformAccessory(name, uuid, Helper.category(device));
+      accessory.context.device = device;
+    }
+
+    const handler = new accessoryType(this, accessory);
+    if (!this.accessories.includes(accessory)) {
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      this.accessories.push(accessory);
+    }
+
+    if (bundle) {
+      this.bundleServices(accessory);
+    }
+    this.prefixServiceNames(accessory, name);
+    this.events.on(device.id, handler.update.bind(handler));
+    handler.updateAccessoryCharacteristic(device);
+    return handler;
+  }
+
   async discoverDevices() {
     const accessoriesToRemoveUUID = this.accessories.map(accessory => accessory.UUID);
 
@@ -219,47 +257,15 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
         continue;
       }
 
-      let lgThinQDevice;
+      this.restoreOrAddAccessory(device, this.accessoryUUID(device), device.name, accessoryType,
+        accessoriesToRemoveUUID, ['DISHWASHER', 'OVEN'].includes(device.type));
 
-      const uuid = this.accessoryUUID(device);
-      const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
-      if (existingAccessory) {
-        accessoriesToRemoveUUID.splice(accessoriesToRemoveUUID.indexOf(uuid), 1);
-
-        this.log.info('Restoring existing accessory:', device.toString());
-        existingAccessory.context.device = device;
-        if (existingAccessory.displayName !== device.name) {
-          this.log.info('Updating accessory name:', existingAccessory.displayName, '->', device.name);
-          existingAccessory.updateDisplayName(device.name);
-          this.api.updatePlatformAccessories([existingAccessory]);
-        }
-        lgThinQDevice = new accessoryType(this, existingAccessory);
-      } else {
-        this.log.info('Adding new accessory:', device.toString());
-
-        const category = Helper.category(device);
-        // create a new accessory
-        const accessory = new this.api.platformAccessory(device.name, uuid, category);
-        accessory.context.device = device;
-
-        lgThinQDevice = new accessoryType(this, accessory);
-
-        // link the accessory to your platform
-        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-
-        this.accessories.push(accessory);
+      // A range's cooktop burners are a separate "Burners" accessory next to the oven.
+      if (device.type === 'OVEN') {
+        const deviceConfig = this.config.devices.find(enabled => enabled.id === device.id);
+        this.restoreOrAddAccessory(device, this.api.hap.uuid.generate(device.id + ':burners'),
+          deviceConfig?.burners_name || 'Burners', Range, accessoriesToRemoveUUID, true);
       }
-
-      const deviceAccessory = this.accessories.find(accessory => accessory.UUID === uuid) as PlatformAccessory;
-      if (['DISHWASHER', 'OVEN'].includes(device.type)) {
-        this.bundleServices(deviceAccessory);
-      }
-      this.prefixServiceNames(deviceAccessory, device.name);
-
-      this.events.on(device.id, lgThinQDevice.update.bind(lgThinQDevice));
-
-      // first time update
-      lgThinQDevice.updateAccessoryCharacteristic(device);
     }
 
     const accessoriesToRemove = this.accessories.filter(accessory => accessoriesToRemoveUUID.includes(accessory.UUID));

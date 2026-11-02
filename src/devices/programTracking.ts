@@ -68,7 +68,12 @@ export function nextProgramStep(tracker: ProgramTracker, status: ProgramStatus):
   return { tracker: { inProgram: false, lastRemainingSeconds: 0 }, finished, started: false };
 }
 
+/** Seconds from LG hour/minute/second fields; missing or non-numeric fields count as 0. */
+export function hmsSeconds(hour: unknown, minute: unknown, second: unknown = 0): number {
+  return (Number(hour) || 0) * 3600 + (Number(minute) || 0) * 60 + (Number(second) || 0);
+}
+
 /** Remaining time from LG's hour/minute fields. */
 export function remainingSeconds(data: { remainTimeHour?: unknown; remainTimeMinute?: unknown } | null | undefined): number {
-  return (Number(data?.remainTimeHour) || 0) * 3600 + (Number(data?.remainTimeMinute) || 0) * 60;
+  return hmsSeconds(data?.remainTimeHour, data?.remainTimeMinute);
 }

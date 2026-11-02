@@ -24,7 +24,7 @@ export default tseslint.config(
       '@stylistic/lines-between-class-members': ['warn', 'always', { exceptAfterSingleLine: true }],
       '@stylistic/member-delimiter-style': ['warn'],
       'dot-notation': 'off',
-      eqeqeq: 'warn',
+      eqeqeq: 'error',
       curly: ['warn', 'all'],
       'prefer-arrow-callback': ['warn'],
       'no-console': ['warn'],

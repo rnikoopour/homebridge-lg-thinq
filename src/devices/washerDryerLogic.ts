@@ -87,34 +87,62 @@ export function isDoorLocked(data: WasherDryerState | null | undefined, lockedVa
   return data?.doorLock === (lockedValue ?? 'DOORLOCK_ON');
 }
 
+/** States that mean a program completed: washer END, dryer COOLDOWN (anti-wrinkle). */
+export const FINISHED_STATES = ['END', 'COOLDOWN'];
+
 /**
- * "Program Finished" tracking. `inProgram` is true from the moment a program is seen
- * running until it finishes; a pause keeps it true. Initialise it from the snapshot
- * at startup so a restart mid-program still reports the finish, and a restart after
- * the finish does not report a stale one.
+ * A program that powers off with this much time left (or less) is treated as completed:
+ * some models switch off at the end without reporting END. Anything longer is a stop.
  */
-export function initialInProgram(data: WasherDryerState | null | undefined): boolean {
+export const FINISHED_POWEROFF_MAX_REMAINING_SECONDS = 60;
+
+/**
+ * "Program Finished" tracking state. `inProgram` is true from the moment a program is
+ * seen running until it ends, stops or is cancelled; a pause keeps it true.
+ * `lastRemainingSeconds` is the time left at the last running update.
+ */
+export interface ProgramTracker {
+  inProgram: boolean;
+  lastRemainingSeconds: number;
+}
+
+/**
+ * Initialise tracking from the snapshot at startup, so a restart mid-program still
+ * reports the finish and a restart after it does not report a stale one.
+ */
+export function initialTracker(data: WasherDryerState | null | undefined): ProgramTracker {
   const view = washerDryerView(data);
-  return view.running || view.paused;
+  return { inProgram: view.running || view.paused, lastRemainingSeconds: view.remainingSeconds };
 }
 
 export interface FinishStep {
-  /** Program state to remember for the next update. */
-  inProgram: boolean;
-  /** The program just finished: trigger "Program Finished" (once per program). */
+  tracker: ProgramTracker;
+  /** The program completed: trigger "Program Finished" (once per program). */
   finished: boolean;
-  /** A new program just started: clear "Program Finished". */
+  /** A new program started: clear "Program Finished". */
   started: boolean;
 }
 
-export function nextFinishState(inProgram: boolean, current: WasherDryerState | null | undefined): FinishStep {
+/**
+ * Only a completed program counts as finished. Stopping, cancelling, powering off
+ * mid-program or an error ends tracking without an alert.
+ */
+export function nextFinishState(tracker: ProgramTracker, current: WasherDryerState | null | undefined): FinishStep {
   const view = washerDryerView(current);
+  const state = current?.state ?? '';
 
   if (view.running) {
-    return { inProgram: true, finished: false, started: !inProgram };
+    return {
+      tracker: { inProgram: true, lastRemainingSeconds: view.remainingSeconds },
+      finished: false,
+      started: !tracker.inProgram,
+    };
   }
-  if (view.paused) {
-    return { inProgram, finished: false, started: false };
+  if (view.paused || !tracker.inProgram) {
+    return { tracker, finished: false, started: false };
   }
-  return { inProgram: false, finished: inProgram, started: false };
+
+  const completed = FINISHED_STATES.includes(state)
+    || (!view.powerOn && tracker.lastRemainingSeconds <= FINISHED_POWEROFF_MAX_REMAINING_SECONDS);
+  return { tracker: { inProgram: false, lastRemainingSeconds: 0 }, finished: completed, started: false };
 }

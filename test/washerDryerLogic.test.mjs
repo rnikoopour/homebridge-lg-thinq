@@ -5,23 +5,26 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const logic = require('../dist/devices/washerDryerLogic.js');
-const { washerDryerView, isDeviceOnline, hasFault, isDoorLocked, initialInProgram, nextFinishState } = logic;
+const { washerDryerView, isDeviceOnline, hasFault, isDoorLocked, initialTracker, nextFinishState } = logic;
 
-/** Feed a sequence of states; return which ones fired "finished" / "started". */
-function run(states, inProgram = false) {
+/** Feed a sequence of updates ("STATE" or {state, remainTimeMinute}); report finished/started events. */
+function run(updates, tracker = { inProgram: false, lastRemainingSeconds: 0 }) {
   const events = [];
-  for (const state of states) {
-    const step = nextFinishState(inProgram, { state });
-    inProgram = step.inProgram;
+  for (const update of updates) {
+    const current = typeof update === 'string' ? { state: update } : update;
+    const step = nextFinishState(tracker, current);
+    tracker = step.tracker;
     if (step.finished) {
-      events.push(`finished@${state}`);
+      events.push(`finished@${current.state}`);
     }
     if (step.started) {
-      events.push(`started@${state}`);
+      events.push(`started@${current.state}`);
     }
   }
-  return { events, inProgram };
+  return { events, tracker };
 }
+
+const running = (minutes) => ({ state: 'RUNNING', remainTimeMinute: minutes });
 
 test('view: off, running, paused, error', () => {
   assert.deepEqual(
@@ -77,39 +80,57 @@ test('door lock: model mapping when present, DOORLOCK_ON otherwise', () => {
 });
 
 test('finish: a full wash cycle fires exactly once, at the end', () => {
-  const { events } = run(['POWEROFF', 'INITIAL', 'RUNNING', 'RINSING', 'SPINNING', 'END', 'END', 'POWEROFF']);
+  const { events } = run(['POWEROFF', 'INITIAL', running(40), { state: 'RINSING', remainTimeMinute: 20 }, running(2), 'END', 'END', 'POWEROFF']);
   assert.deepEqual(events, ['started@RUNNING', 'finished@END']);
 });
 
-test('finish: pausing and resuming does not fire', () => {
-  const { events } = run(['RUNNING', 'PAUSE', 'PAUSE', 'RUNNING', 'END']);
-  assert.deepEqual(events, ['started@RUNNING', 'finished@END']);
+test('finish: stopping or powering off mid-cycle is not a finish', () => {
+  assert.deepEqual(run([running(30), 'POWEROFF']).events, ['started@RUNNING']);
+  assert.deepEqual(run([running(30), 'POWERFAIL']).events, ['started@RUNNING']);
+});
+
+test('finish: cancelling mid-cycle (back to INITIAL) is not a finish', () => {
+  assert.deepEqual(run([running(30), 'INITIAL', 'POWEROFF']).events, ['started@RUNNING']);
+});
+
+test('finish: an error mid-cycle is not a finish', () => {
+  assert.deepEqual(run([running(30), 'ERROR']).events, ['started@RUNNING']);
+});
+
+test('finish: powering off with a minute or less left counts as finished (no END reported)', () => {
+  assert.deepEqual(run([running(30), running(1), 'POWEROFF']).events, ['started@RUNNING', 'finished@POWEROFF']);
+  assert.deepEqual(run([running(30), running(2), 'POWEROFF']).events, ['started@RUNNING']);
+});
+
+test('finish: pausing and resuming does not fire; stopping while paused does not either', () => {
+  assert.deepEqual(run([running(30), 'PAUSE', 'PAUSE', running(29), 'END']).events, ['started@RUNNING', 'finished@END']);
+  assert.deepEqual(run([running(30), 'PAUSE', 'POWEROFF']).events, ['started@RUNNING']);
 });
 
 test('finish: dryer cooldown counts as the end, without a second alert at END', () => {
-  const { events } = run(['DRYING', 'COOLDOWN', 'END', 'POWEROFF']);
+  const { events } = run([{ state: 'DRYING', remainTimeMinute: 50 }, 'COOLDOWN', 'END', 'POWEROFF']);
   assert.deepEqual(events, ['started@DRYING', 'finished@COOLDOWN']);
 });
 
 test('finish: back-to-back programs each fire once', () => {
-  const { events } = run(['RUNNING', 'END', 'RUNNING', 'END']);
+  const { events } = run([running(30), 'END', running(30), 'END']);
   assert.deepEqual(events, ['started@RUNNING', 'finished@END', 'started@RUNNING', 'finished@END']);
 });
 
 test('finish: restart mid-program still reports the finish', () => {
-  const inProgram = initialInProgram({ state: 'RUNNING' });
-  assert.equal(inProgram, true);
-  assert.deepEqual(run(['RUNNING', 'END'], inProgram).events, ['finished@END']);
+  const tracker = initialTracker(running(30));
+  assert.equal(tracker.inProgram, true);
+  assert.deepEqual(run([running(29), 'END'], tracker).events, ['finished@END']);
 });
 
 test('finish: restart while paused still reports the finish', () => {
-  assert.deepEqual(run(['PAUSE', 'RUNNING', 'END'], initialInProgram({ state: 'PAUSE' })).events, ['finished@END']);
+  assert.deepEqual(run([running(10), 'END'], initialTracker({ state: 'PAUSE' })).events, ['finished@END']);
 });
 
 test('finish: restart after the program ended does not fire a stale alert', () => {
-  const inProgram = initialInProgram({ state: 'END' });
-  assert.equal(inProgram, false);
-  assert.deepEqual(run(['END', 'END', 'POWEROFF'], inProgram).events, []);
+  const tracker = initialTracker({ state: 'END' });
+  assert.equal(tracker.inProgram, false);
+  assert.deepEqual(run(['END', 'END', 'POWEROFF'], tracker).events, []);
 });
 
 test('finish: an idle machine never fires', () => {

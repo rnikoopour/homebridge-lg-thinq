@@ -7,7 +7,8 @@ import {DeviceModel} from '../lib/DeviceModel';
 import {
   NOT_RUNNING_STATES,
   hasFault,
-  initialInProgram,
+  ProgramTracker,
+  initialTracker,
   isDeviceOnline,
   isDoorLocked,
   nextFinishState,
@@ -25,8 +26,8 @@ const FINISHED_RESET_MS = 10 * 60 * 1000;
  * ./washerDryerLogic (pure, unit tested); this class only maps them to services.
  */
 export default class WasherDryer extends baseDevice {
-  /** True while a program is running or paused; see nextFinishState(). */
-  protected inProgram: boolean;
+  /** Program Finished tracking; see nextFinishState(). */
+  protected tracker: ProgramTracker;
   protected finishedResetTimer?: ReturnType<typeof setTimeout>;
 
   protected serviceWasherDryer;
@@ -55,7 +56,7 @@ export default class WasherDryer extends baseDevice {
     const device: Device = accessory.context.device;
 
     // A restart mid-program must still report the finish; a restart after it must not.
-    this.inProgram = initialInProgram(this.Status.data);
+    this.tracker = initialTracker(this.Status.data);
 
     this.serviceWasherDryer = accessory.getService(Valve);
     if (!this.serviceWasherDryer) {
@@ -171,8 +172,8 @@ export default class WasherDryer extends baseDevice {
     const {Characteristic: {OccupancyDetected}} = this.platform;
 
     if (this.config.washer_trigger as boolean && this.serviceEventFinished) {
-      const step = nextFinishState(this.inProgram, this.Status.data);
-      this.inProgram = step.inProgram;
+      const step = nextFinishState(this.tracker, this.Status.data);
+      this.tracker = step.tracker;
 
       if (step.finished) {
         this.serviceEventFinished.updateCharacteristic(OccupancyDetected, OccupancyDetected.OCCUPANCY_DETECTED);

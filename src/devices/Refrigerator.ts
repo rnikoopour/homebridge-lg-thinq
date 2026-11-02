@@ -179,7 +179,7 @@ export default class Refrigerator extends baseDevice {
     const device: Device = this.accessory.context.device;
     const On = device.deviceModel.lookupMonitorName('expressMode', '@CP_ON_EN_W');
     const Off = device.deviceModel.lookupMonitorName('expressMode', '@CP_OFF_EN_W');
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: null,
       dataValue: null,
       dataSetList: {
@@ -197,7 +197,7 @@ export default class Refrigerator extends baseDevice {
     const device: Device = this.accessory.context.device;
     const On = device.deviceModel.lookupMonitorName('expressFridge', '@CP_ON_EN_W');
     const Off = device.deviceModel.lookupMonitorName('expressFridge', '@CP_OFF_EN_W');
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: null,
       dataValue: null,
       dataSetList: {
@@ -215,7 +215,7 @@ export default class Refrigerator extends baseDevice {
     const device: Device = this.accessory.context.device;
     const On = device.deviceModel.lookupMonitorName('ecoFriendly', '@CP_ON_EN_W');
     const Off = device.deviceModel.lookupMonitorName('ecoFriendly', '@CP_OFF_EN_W');
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: null,
       dataValue: null,
       dataSetList: {

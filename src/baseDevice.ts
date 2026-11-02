@@ -30,7 +30,13 @@ export class baseDevice extends EventEmitter {
     const device: Device = this.accessory.context.device;
     this.platform.log.debug('['+device.name+'] Received snapshot: ', JSON.stringify(snapshot));
     device.data.snapshot = mergeDeep({}, device.snapshot, snapshot);
-    this.updateAccessoryCharacteristic(device);
+    // Runs from MQTT and polling callbacks; an exception here would crash the bridge.
+    try {
+      this.updateAccessoryCharacteristic(device);
+    } catch (err) {
+      this.platform.log.error('['+device.name+'] Failed to apply device update:', (err as Error)?.message ?? err);
+      this.platform.log.debug(String((err as Error)?.stack ?? err));
+    }
   }
 
   public get config() {

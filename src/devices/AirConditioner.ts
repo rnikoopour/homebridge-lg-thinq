@@ -164,7 +164,7 @@ export default class AirConditioner extends baseDevice {
     // https://github.com/nVuln/homebridge-lg-thinq/issues/177
     setInterval(() => {
       if (device.online) {
-        this.platform.ThinQ?.deviceControl(device.id, {
+        void this.platform.ThinQ?.deviceControl(device.id, {
           dataKey: 'airState.mon.timeout',
           dataValue: '70',
         }, 'Set', 'allEventEnable', 'control').then(() => {
@@ -199,7 +199,7 @@ export default class AirConditioner extends baseDevice {
     const device: Device = this.accessory.context.device;
 
     if (this.Status.isPowerOn && this.Status.opMode === 0) {
-      this.platform.ThinQ?.deviceControl(device.id, {
+      void this.platform.ThinQ?.deviceControl(device.id, {
         dataKey: 'airState.powerSave.basic',
         dataValue: value ? 1 : 0,
       }).then(() => {
@@ -213,7 +213,7 @@ export default class AirConditioner extends baseDevice {
     const device: Device = this.accessory.context.device;
 
     if (this.Status.isPowerOn && this.Status.opMode === 0) {
-      this.platform.ThinQ?.deviceControl(device.id, {
+      void this.platform.ThinQ?.deviceControl(device.id, {
         dataKey: 'airState.wMode.airClean',
         dataValue: value ? 1 : 0,
       }).then(() => {
@@ -227,7 +227,7 @@ export default class AirConditioner extends baseDevice {
     const device: Device = this.accessory.context.device;
 
     if (this.Status.isPowerOn && this.Status.opMode === 0) {
-      this.platform.ThinQ?.deviceControl(device.id, {
+      void this.platform.ThinQ?.deviceControl(device.id, {
         dataKey: 'airState.miscFuncState.silentAWHP',
         dataValue: value ? 1 : 0,
       }).then(() => {
@@ -241,7 +241,7 @@ export default class AirConditioner extends baseDevice {
     const device: Device = this.accessory.context.device;
 
     if (this.Status.isPowerOn && this.Status.opMode === 0) {
-      this.platform.ThinQ?.deviceControl(device.id, {
+      void this.platform.ThinQ?.deviceControl(device.id, {
         dataKey: 'airState.wMode.jet',
         dataValue: value ? 1 : 0,
       }).then(() => {
@@ -382,7 +382,7 @@ export default class AirConditioner extends baseDevice {
     }
 
     const device: Device = this.accessory.context.device;
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.lightingState.displayControl',
       dataValue: value ? 1 : 0,
     }).then(() => {
@@ -429,7 +429,7 @@ export default class AirConditioner extends baseDevice {
       return; // don't send same status
     }
 
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.operation',
       dataValue: isOn as number,
     }, 'Operation').then(success => {
@@ -453,7 +453,7 @@ export default class AirConditioner extends baseDevice {
       return;
     }
 
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.tempState.target',
       dataValue: temperature,
     }).then(() => {
@@ -472,7 +472,7 @@ export default class AirConditioner extends baseDevice {
     this.platform.log.info('Set fan speed = ', speedValue);
     const device: Device = this.accessory.context.device;
     const windStrength = parseInt(Object.keys(FanSpeed)[speedValue - 1]) || FanSpeed.HIGH;
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.windStrength',
       dataValue: windStrength,
     });
@@ -488,7 +488,7 @@ export default class AirConditioner extends baseDevice {
     const device: Device = this.accessory.context.device;
 
     if (this.config.ac_swing_mode === 'BOTH') {
-      this.platform.ThinQ?.deviceControl(device.id, {
+      void this.platform.ThinQ?.deviceControl(device.id, {
         dataKey: null,
         dataValue: null,
         dataSetList: {
@@ -502,7 +502,7 @@ export default class AirConditioner extends baseDevice {
         this.updateAccessoryCharacteristic(device);
       });
     } else if (this.config.ac_swing_mode === 'VERTICAL') {
-      this.platform.ThinQ?.deviceControl(device.id, {
+      void this.platform.ThinQ?.deviceControl(device.id, {
         dataKey: 'airState.wDir.vStep',
         dataValue: swingValue,
       }).then(() => {
@@ -510,7 +510,7 @@ export default class AirConditioner extends baseDevice {
         this.updateAccessoryCharacteristic(device);
       });
     } else if (this.config.ac_swing_mode === 'HORIZONTAL') {
-      this.platform.ThinQ?.deviceControl(device.id, {
+      void this.platform.ThinQ?.deviceControl(device.id, {
         dataKey: 'airState.wDir.hStep',
         dataValue: swingValue,
       }).then(() => {
@@ -522,7 +522,7 @@ export default class AirConditioner extends baseDevice {
 
   async setOpMode(opMode) {
     const device: Device = this.accessory.context.device;
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.opMode',
       dataValue: opMode,
     });

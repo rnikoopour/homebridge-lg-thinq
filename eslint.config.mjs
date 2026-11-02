@@ -9,7 +9,7 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     files: ['**/*.ts'],
-    languageOptions: { globals: globals.node },
+    languageOptions: { globals: globals.node, parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
     plugins: { '@stylistic': stylistic },
     rules: {
       '@stylistic/quotes': ['warn', 'single'],
@@ -25,6 +25,9 @@ export default tseslint.config(
       '@stylistic/member-delimiter-style': ['warn'],
       'dot-notation': 'off',
       eqeqeq: 'error',
+      // Homebridge shuts the bridge down on any uncaught exception, including unhandled rejections.
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { arguments: true, attributes: false } }],
       curly: ['warn', 'all'],
       'prefer-arrow-callback': ['warn'],
       'no-console': ['warn'],

@@ -78,7 +78,7 @@ export default class Dehumidifier extends baseDevice {
       return; // don't send same status
     }
 
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.operation',
       dataValue: isOn,
     }).then(() => {
@@ -93,7 +93,7 @@ export default class Dehumidifier extends baseDevice {
     }
 
     const device: Device = this.accessory.context.device;
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.humidity.desired',
       dataValue: value as number,
     }).then(() => {
@@ -110,7 +110,7 @@ export default class Dehumidifier extends baseDevice {
     const device: Device = this.accessory.context.device;
     const values = Object.keys(RotateSpeed);
     const windStrength = parseInt(values[Math.round((value as number)) - 1]) || RotateSpeed.HIGH;
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.windStrength',
       dataValue: windStrength,
     });

@@ -88,7 +88,7 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
       });
     };
 
-    this.api.on('didFinishLaunching', async () => {
+    this.api.on('didFinishLaunching', () => {
       this.log.debug('Executed didFinishLaunching callback');
       didFinishLaunching();
     });
@@ -239,7 +239,7 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
         this.log.info('Device not supported: '+ device.platform + ': ' + device.toString());
         this.ThinQ.unregister(device).then(() => {
           this.log.debug(device.id, '- unregistered!');
-        });
+        }).catch(err => this.log.debug(device.id, '- unregister failed:', err));
         continue;
       }
 
@@ -270,6 +270,9 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
           devices.filter(device => device.platform === PlatformType.ThinQ2).forEach(device => {
             this.events.emit(device.id, device.snapshot);
           });
+        }).catch(err => {
+          this.log.error('Failed to poll devices:', err?.message ?? err);
+          this.log.debug(err);
         });
       }, this.intervalTime); // every interval minute - backup method if mqtt not working
 
@@ -288,7 +291,7 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     // polling thinq1 device
     this.log.info('Start polling device data every '+ this.config.refresh_interval +' second.');
     const ThinQ = this.ThinQ;
-    const interval = setInterval(async () => {
+    const interval = setInterval(() => void (async () => {
       try {
         for (const accessory of this.accessories) {
           const device: Device = accessory.context.device;
@@ -306,7 +309,9 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
           clearInterval(interval);
           return; // stop plugin here
         }
+        this.log.error('Failed to poll ThinQ1 devices:', (err as Error)?.message ?? err);
+        this.log.debug(String((err as Error)?.stack ?? err));
       }
-    }, this.intervalTime);
+    })(), this.intervalTime);
   }
 }

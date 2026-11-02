@@ -14,12 +14,27 @@ export {ProgramTracker} from './programTracking';
  * network code here, so every rule can be unit tested directly.
  */
 
-/** States in which no wash/dry program is actively running. */
-export const NOT_RUNNING_STATES = ['COOLDOWN', 'POWEROFF', 'POWERFAIL', 'INITIAL', 'PAUSE', 'AUDIBLE_DIAGNOSIS', 'FIRMWARE',
-  'COURSE_DOWNLOAD', 'ERROR', 'END'];
+/*
+ * State names come from LG's washer/dryer device models (e.g. a front-load washer:
+ * POWEROFF INITIAL PAUSE DETECTING ADD_DRAIN DETERGENT_AMOUNT RESERVED PREWASH RUNNING
+ * RINSING RINSEHOLD SPINNING DRYING END REFRESHING ERROR_AUTO_OFF FROZEN_PREVENT_*
+ * AUDIBLE_DIAGNOSIS AUTO_DT_OPEN_PAUSE CONFIRM_START_FOR_CONTROL; a WashTower dryer:
+ * POWEROFF INITIAL RUNNING PAUSE END ERROR AUDIBLE_DIAGNOSIS DRYING COOLING WRINKLECARE).
+ * Any state not listed below is part of a running program.
+ */
 
-/** Paused programs resume, so a pause is not the end of a program. */
-const PAUSED_STATES = ['PAUSE'];
+/** The program completed. After END, WRINKLECARE/REFRESHING tumble occasionally until opened. */
+export const COMPLETED_STATES = ['END', 'COOLDOWN', 'WRINKLECARE', 'REFRESHING'];
+
+/** A program that is paused or waiting for the user; it will resume. */
+export const PAUSED_STATES = ['PAUSE', 'RINSEHOLD', 'AUTO_DT_OPEN_PAUSE'];
+
+/** On, but no program is running: idle, delayed start, maintenance (freeze prevention), errors. */
+export const IDLE_STATES = ['INITIAL', 'RESERVED', 'CONFIRM_START_FOR_CONTROL', 'AUDIBLE_DIAGNOSIS', 'FIRMWARE', 'COURSE_DOWNLOAD',
+  'FROZEN_PREVENT_INITIAL', 'FROZEN_PREVENT_PAUSE', 'FROZEN_PREVENT_RUNNING', 'ERROR', 'ERROR_AUTO_OFF'];
+
+/** States in which no wash/dry program is actively running. */
+export const NOT_RUNNING_STATES = ['POWEROFF', 'POWERFAIL', ...COMPLETED_STATES, ...PAUSED_STATES, ...IDLE_STATES];
 
 /** The washerDryer (or washer) section of a ThinQ snapshot. Fields are optional: LG sends partial updates. */
 export interface WasherDryerState {
@@ -65,7 +80,7 @@ export function washerDryerView(data: WasherDryerState | null | undefined): Wash
     powerOn: isPowerOn(state),
     running,
     paused: PAUSED_STATES.includes(state ?? ''),
-    error: state === 'ERROR',
+    error: (state ?? '').startsWith('ERROR'),
     remainingSeconds: running ? remainingSeconds(data) : 0,
     programSeconds: running
       ? Math.max((Number(data?.initialTimeHour) || 0) * 3600 + (Number(data?.initialTimeMinute) || 0) * 60, remainingSeconds(data))
@@ -103,8 +118,8 @@ export function isDoorLocked(data: WasherDryerState | null | undefined, lockedVa
   return data?.doorLock === (lockedValue ?? 'DOORLOCK_ON');
 }
 
-/** States that mean a program completed: washer END, dryer COOLDOWN (anti-wrinkle). */
-export const FINISHED_STATES = ['END', 'COOLDOWN'];
+/** @deprecated use COMPLETED_STATES */
+export const FINISHED_STATES = COMPLETED_STATES;
 
 /** Map washer/dryer status to the shared program-tracking model. */
 export function washerDryerProgramStatus(data: WasherDryerState | null | undefined): ProgramStatus {
@@ -113,7 +128,7 @@ export function washerDryerProgramStatus(data: WasherDryerState | null | undefin
     powerOn: view.powerOn,
     running: view.running,
     paused: view.paused,
-    completed: FINISHED_STATES.includes(data?.state ?? ''),
+    completed: COMPLETED_STATES.includes(data?.state ?? ''),
     remainingSeconds: view.remainingSeconds,
   };
 }

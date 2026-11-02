@@ -174,6 +174,16 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
 
         this.log.info('Restoring existing accessory:', device.toString());
         existingAccessory.context.device = device;
+        // Names are published only through Name (like homebridge-pihole); drop any
+        // writable ConfiguredName left in the cache by earlier versions.
+        const configuredNameUUID = this.api.hap.Characteristic.ConfiguredName.UUID;
+        for (const service of existingAccessory.services) {
+          for (const characteristic of [...service.characteristics]) {
+            if (characteristic.UUID === configuredNameUUID) {
+              service.removeCharacteristic(characteristic);
+            }
+          }
+        }
         if (existingAccessory.displayName !== device.name) {
           this.log.info('Updating accessory name:', existingAccessory.displayName, '->', device.name);
           existingAccessory.updateDisplayName(device.name);

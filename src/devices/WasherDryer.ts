@@ -40,8 +40,6 @@ export default class WasherDryer extends baseDevice {
     this.serviceWasherDryer = accessory.getService(Valve);
     if (!this.serviceWasherDryer) {
       this.serviceWasherDryer = accessory.addService(Valve, device.name, device.name);
-      this.serviceWasherDryer.addOptionalCharacteristic(Characteristic.ConfiguredName);
-      this.serviceWasherDryer.updateCharacteristic(Characteristic.ConfiguredName, device.name);
     }
 
     this.serviceWasherDryer.getCharacteristic(Characteristic.Active)
@@ -59,8 +57,6 @@ export default class WasherDryer extends baseDevice {
     if (this.config.washer_door_lock && device.platform === PlatformType.ThinQ2 && 'doorLock' in device.snapshot?.washerDryer) {
       if (!this.serviceDoorLock) {
         this.serviceDoorLock = accessory.addService(LockMechanism, device.name + ' - Door');
-        this.serviceDoorLock.addOptionalCharacteristic(Characteristic.ConfiguredName);
-        this.serviceDoorLock.updateCharacteristic(Characteristic.ConfiguredName, device.name + ' - Door');
       }
 
       this.serviceDoorLock.getCharacteristic(Characteristic.LockCurrentState)
@@ -82,8 +78,6 @@ export default class WasherDryer extends baseDevice {
     if (this.config.washer_trigger as boolean) {
       if (!this.serviceEventFinished) {
         this.serviceEventFinished = accessory.addService(OccupancySensor, 'Program Finished', 'Program Finished');
-        this.serviceEventFinished.addOptionalCharacteristic(Characteristic.ConfiguredName);
-        this.serviceEventFinished.updateCharacteristic(Characteristic.ConfiguredName, 'Program Finished');
       }
 
       this.serviceEventFinished.setCharacteristic(Characteristic.Name, 'Program Finished');
@@ -98,8 +92,6 @@ export default class WasherDryer extends baseDevice {
     if (this.config.washer_tub_clean as boolean) {
       if (!this.serviceTubCleanMaintenance) {
         this.serviceTubCleanMaintenance = accessory.addService(OccupancySensor, 'Tub Clean Coach', 'Tub Clean Coach');
-        this.serviceTubCleanMaintenance.addOptionalCharacteristic(Characteristic.ConfiguredName);
-        this.serviceTubCleanMaintenance.updateCharacteristic(Characteristic.ConfiguredName, 'Tub Clean Coach');
       }
 
       this.serviceTubCleanMaintenance.setCharacteristic(Characteristic.Name, 'Tub Clean Coach');

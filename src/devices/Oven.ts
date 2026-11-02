@@ -142,144 +142,144 @@ export default class Oven extends baseDevice {
     this.ovenService.setCharacteristic(this.platform
       .Characteristic.SleepDiscoveryMode, this.platform.Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
     this.ovenService.getCharacteristic(this.platform.Characteristic.Active)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenServiceActive();
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === 0) {
           this.stopOven();
         } else {
           this.sendOvenCommand();
         }
-        callback(null);
+
       });
     this.ovenService
       .setCharacteristic(this.platform.Characteristic.ActiveIdentifier, this.inputID);
     this.ovenService
       .getCharacteristic(this.platform.Characteristic.ActiveIdentifier)
-      .on('set', (inputIdentifier, callback) => {
+      .onSet((inputIdentifier) => {
         if (inputIdentifier > 14 || inputIdentifier < 1) {
           this.inputID = 1;
         } else {
           this.inputID = inputIdentifier;
         }
-        callback();
+
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.inputID;
-        callback(null, currentValue);
+        return currentValue;
       });
 
     this.ovenState = this.createInputSourceService('Oven Status', 'NicoCataGaTa-Oven1003', 1, this.ovenStatus(), true);
     this.ovenState.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenStatus();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenState);
 
     this.ovenMode = this.createInputSourceService('Oven Mode', 'NicoCataGaTa-Oven1004', 2, this.ovenModeName(), this.ovenOnStatus());
     this.ovenMode.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenModeName();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenMode);
 
     this.ovenTemp = this.createInputSourceService('Oven Temperature', 'NicoCataGaTa-Oven1004T', 3, this.ovenTemperature(), this.ovenOnStatus());
     this.ovenTemp.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenTemperature();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenTemp);
 
     this.prove = this.createInputSourceService('Probe Status', 'NicoCata-Always15', 4, this.proveStatus(), this.showProbe);
     this.prove.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.proveStatus();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.prove);
 
     this.ovenOptions = this.createInputSourceService('Oven Options', 'NicoCata-Always4', 5, this.oventOptions(), this.ovenOnStatus());
     this.ovenOptions.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.oventOptions();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenOptions);
 
     this.ovenStart = this.createInputSourceService('Oven Start Time', 'NicoCata-Always1', 6, this.courseStartString, this.showTime);
     this.ovenStart.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.courseStartString;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenStart);
 
     this.ovenTimer = this.createInputSourceService('Oven Timer Status', 'NicoCata-Always2', 7, this.courseTimerString, this.showTimer);
     this.ovenTimer.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.courseTimerString;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenTimer);
 
     this.ovenTime = this.createInputSourceService('Oven Cook Time Status', 'NicoCata-Always2T', 8, this.courseTimeString, this.showTime);
     this.ovenTime.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.courseTimeString;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenTime);
 
     this.ovenEndTime = this.createInputSourceService('Oven End Time', 'NicoCata-Always3', 9, this.courseTimeEndString, this.showTime);
     this.ovenEndTime.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.courseTimeEndString;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenEndTime);
 
     this.burner1 = this.createInputSourceService('Front Left Burner Status', 'NicoCataGaTa-Oven001', 10, this.burner1State(), this.showBurner1);
     this.burner1.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.burner1State();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.burner1);
 
     this.burner2 = this.createInputSourceService('Back Left Burner Status', 'NicoCataGaTa-Oven002', 11, this.burner2State(), this.showBurner2);
     this.burner2.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.burner2State();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.burner2);
 
     this.burner3 = this.createInputSourceService('Center Burner Status', 'NicoCataGaTa-Oven003', 12, this.burner3State(), this.showBurner3);
     this.burner3.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.burner3State();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.burner3);
 
     this.burner4 = this.createInputSourceService('Front Right Burner Status', 'NicoCataGaTa-Oven004', 13, this.burner4State(), this.showBurner4);
     this.burner4.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.burner4State();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.burner4);
 
     this.burner5 = this.createInputSourceService('Back Right Burner Status', 'NicoCataGaTa-Oven005', 14, this.burner5State(), this.showBurner5);
     this.burner5.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.burner5State();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.burner5);
 
@@ -290,14 +290,14 @@ export default class Oven extends baseDevice {
     this.ovenTimerService.setCharacteristic(Characteristic.Name, 'Oven Cook Time');
     this.ovenTimerService.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.IRRIGATION);
     this.ovenTimerService.getCharacteristic(Characteristic.Active)
-      .on('get', (callback) => {
+      .onGet(() => {
         let currentValue = 0;
         if (this.remainTime() != 0) {
           currentValue = 1;
         }
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === 0) {
           this.stopOven();
           this.ovenTimerService.updateCharacteristic(Characteristic.Active, 0);
@@ -306,44 +306,44 @@ export default class Oven extends baseDevice {
         } else {
           this.sendOvenCommand();
         }
-        callback(null);
+
       });
     this.ovenTimerService.setCharacteristic(Characteristic.InUse, this.remainTime() > 0 ? Characteristic.InUse.IN_USE : Characteristic.InUse.NOT_IN_USE);
     this.ovenTimerService.getCharacteristic(Characteristic.RemainingDuration)
       .setProps({
         maxValue: (86400 / 2) - 1, // 12hours
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.remainTime();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenTimerService.getCharacteristic(this.platform.Characteristic.SetDuration)
       .setProps({
         maxValue: (86400 / 2) - 1, // 12hours
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.oventTargetTime();
 
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         this.pauseUpdate = true;
         this.platform.log.debug('Cooking Duration set to to: ' + this.secondsToTime(value));
         this.ovenCommandList.ovenSetDuration = value;
-        callback(null);
+
       });
     this.ovenAlarmService = new this.platform.Service.Valve('Oven Timer', 'NicoCataGaTa-OvenT32');
     this.ovenAlarmService.setCharacteristic(Characteristic.Name, 'Oven Timer');
     this.ovenAlarmService.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.IRRIGATION);
     this.ovenAlarmService.getCharacteristic(Characteristic.Active)
-      .on('get', (callback) => {
+      .onGet(() => {
         let currentValue = 0;
         if (this.ovenTimerTime() != 0) {
           currentValue = 1;
         }
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value == 0) {
           this.timerAlarmSec = 0;
           this.sendTimerCommand(0);
@@ -356,144 +356,144 @@ export default class Oven extends baseDevice {
           this.ovenAlarmService.updateCharacteristic(Characteristic.RemainingDuration, this.timerAlarmSec);
           this.ovenAlarmService.updateCharacteristic(Characteristic.InUse, 1);
         }
-        callback(null);
+
       });
     this.ovenAlarmService.setCharacteristic(Characteristic.InUse, this.ovenTimerTime() > 0 ? Characteristic.InUse.IN_USE : Characteristic.InUse.NOT_IN_USE);
     this.ovenAlarmService.getCharacteristic(Characteristic.RemainingDuration)
       .setProps({
         maxValue: (86400 / 2), // 12hours
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenTimerTime();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenAlarmService.getCharacteristic(this.platform.Characteristic.SetDuration)
       .setProps({
         maxValue: (86400 / 2), // 12hours
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.timerAlarmSec;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value >= (86400 / 2)) {
           value = (86400 / 2) - 1;
         }
         this.timerAlarmSec = value;
-        callback(null);
+
       });
     ////////////Buttons
     this.bakeSwitch = accessory.getService('Bake Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Bake Mode', 'CataNicoGaTa-80');
     this.bakeSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         this.platform.log.debug('Bake Switch Get state');
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value) {
           this.ovenCommandList.ovenMode = 'BAKE';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
     this.convectionBakeSwitch = accessory.getService('Convection Bake Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Convection Bake Mode', 'CataNicoGaTa-Control1');
     this.convectionBakeSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'CONVECTION_BAKE';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
     this.convectionRoastSwitch = accessory.getService('Convection Roast Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Convection Roast Mode', 'CataNicoGaTa-Control2');
     this.convectionRoastSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'CONVECTION_ROST';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
     this.frozenMealSwitch = accessory.getService('Frozen Meal Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Frozen Meal Mode', 'CataNicoGaTa-Control3');
     this.frozenMealSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'FROZEN_MEAL';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
     this.airFrySwitch = accessory.getService('Air Fry Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Air Fry Mode', 'CataNicoGaTa-Control4');
     this.airFrySwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'AIR_FRY';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
     this.airSousvideSwitch = accessory.getService('Air Sousvide Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Air Sousvide Mode', 'CataNicoGaTa-Control5');
     this.airSousvideSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'AIR_SOUSVIDE';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
     this.warmModeSwitch = accessory.getService('Proof-Warm Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Proof-Warm Mode', 'CataNicoGaTa-Control5W');
     this.warmModeSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'WARM';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
     this.cancelSwitch = accessory.getService('Stop Oven') ||
       accessory.addService(this.platform.Service.Switch, 'Stop Oven', 'CataNicoGaTa-Control6');
     this.cancelSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.stopOven();
         }
@@ -501,57 +501,57 @@ export default class Oven extends baseDevice {
           this.cancelSwitch.updateCharacteristic(this.platform.Characteristic.On, false);
         }, 1000);
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
     this.monitorOnlySwitch = accessory.getService('Monitor Only Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Monitor Only Mode', 'CataNicoGaTa-Control7');
     this.monitorOnlySwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         if (this.Status.data?.upperRemoteStart.includes('DIS')) {
           this.monitorOnly = true;
         }
         const currentValue = this.monitorOnly;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         this.homekitMonitorOnly = value;
         this.monitorOnly = value;
-        callback(null);
+
       });
 
     this.startOvenSwitch = accessory.getService('Start Oven') ||
       accessory.addService(this.platform.Service.Switch, 'Start Oven', 'CataNicoGaTa-Control8');
     this.startOvenSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.sendOvenCommand();
           setTimeout(() => {
             this.startOvenSwitch.updateCharacteristic(this.platform.Characteristic.On, false);
           }, 1000);
         }
-        callback(null);
+
       });
 
     if ('upperCookAndWarmStatus' in this.Status.data) {
       this.keepWarmSwitch = accessory.getService('Keep Warm') ||
         accessory.addService(this.platform.Service.Switch, 'Keep Warm', 'CataNicoGaTa-Control9');
       this.keepWarmSwitch.getCharacteristic(this.platform.Characteristic.On)
-        .on('get', (callback) => {
+        .onGet(() => {
           const currentValue = !this.Status.data?.upperCookAndWarmStatus?.includes('DIS');
-          callback(null, currentValue);
+          return currentValue;
         })
-        .on('set', (value, callback) => {
+        .onSet((value) => {
           if (value === true) {
             this.ovenCommandList.ovenKeepWarm = 'ENABLE';
           } else {
             this.ovenCommandList.ovenKeepWarm = 'DISABLE';
           }
-          callback(null);
+
         });
     }
 
@@ -588,17 +588,17 @@ export default class Oven extends baseDevice {
     this.ovenTempControl.setCharacteristic(this.platform.Characteristic.Name, this.accessory.context.device.name);
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
       .setProps({validValues: [this.platform.Characteristic.TargetHeatingCoolingState.OFF, this.platform.Characteristic.TargetHeatingCoolingState.HEAT]})
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.targetHeatingState();
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value == 0) {
           this.stopOven();
         } else {
           this.pauseUpdate = true;
         }
-        callback(null);
+
       });
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .setProps({
@@ -606,14 +606,14 @@ export default class Oven extends baseDevice {
         maxValue: 218,
         minStep: 0.5,
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenCurrentTemperature();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.localHumidity;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TargetTemperature)
       .setProps({
@@ -621,18 +621,18 @@ export default class Oven extends baseDevice {
         maxValue: 218,
         minStep: 0.5,
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenTargetTemperature();
         // this.platform.log('Get Target Temp' + this.ovenTargetTemperature())
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
           this.ovenCommandList.ovenSetTemperature = this.tempCtoF(value);
         } else {
           this.ovenCommandList.ovenSetTemperature = Math.round(value);
         }
-        callback(null);
+
       });
 
     this.probeTempControl = this.accessory.getService('Probe Temperature Control') ||
@@ -642,13 +642,13 @@ export default class Oven extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, 1);
     this.probeTempControl.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
       .setProps({validValues: [this.platform.Characteristic.TargetHeatingCoolingState.OFF, this.platform.Characteristic.TargetHeatingCoolingState.HEAT]})
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.probeTargetState();
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((_value) => {
         this.pauseUpdate = true;
-        callback(null);
+
       });
     this.probeTempControl.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .setProps({
@@ -656,14 +656,14 @@ export default class Oven extends baseDevice {
         maxValue: 285,
         minStep: 0.1,
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.probeCurrentTemperature();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.probeTempControl.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.localHumidity;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.probeTempControl.getCharacteristic(this.platform.Characteristic.TargetTemperature)
       .setProps({
@@ -671,17 +671,17 @@ export default class Oven extends baseDevice {
         maxValue: 285,
         minStep: 0.1,
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.probeTargetTemperature();
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
           this.ovenCommandList.probeTemperature = this.tempCtoF(value);
         } else {
           this.ovenCommandList.probeTemperature = Math.round(value);
         }
-        callback(null);
+
       });
   }
 

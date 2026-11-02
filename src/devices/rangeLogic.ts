@@ -1,28 +1,17 @@
 /**
- * Pure cooktop burner logic: LG ThinQ ovenState in, burner states out.
- * LG reports each burner as cooktop<N>CooktopState ('INIT' when off).
+ * Pure cooktop burner logic: LG ThinQ ovenState in, "any burner on" out.
+ *
+ * LG reports cooktop<N>CooktopState ('INIT' when off) and burnerOnCounter, but the
+ * numbers are not burner positions: on a real range, different physical burners were
+ * each reported as cooktop1 (slots appear to be filled in the order burners are turned
+ * on). So only "any burner on" and the count are reliable.
  */
-
-/** Burner names by LG cooktop number. */
-export const BURNER_NAMES: Record<number, string> = {
-  1: 'Front Left',
-  2: 'Back Left',
-  3: 'Center',
-  4: 'Front Right',
-  5: 'Back Right',
-};
-
-export interface Burner {
-  index: number;
-  name: string;
-  on: boolean;
-}
 
 export interface RangeView {
   /** Any burner is on. */
   on: boolean;
-  /** The burners this model reports, in cooktop order. */
-  burners: Burner[];
+  /** How many burners are on. */
+  burnersOn: number;
 }
 
 export function burnerOn(state: unknown): boolean {
@@ -30,13 +19,13 @@ export function burnerOn(state: unknown): boolean {
 }
 
 export function rangeView(data: Record<string, unknown> | null | undefined): RangeView {
-  const burners: Burner[] = [];
-  for (const index of Object.keys(BURNER_NAMES).map(Number)) {
-    const key = `cooktop${index}CooktopState`;
-    if (data && key in data) {
-      burners.push({index, name: BURNER_NAMES[index], on: burnerOn(data[key])});
+  let slotsOn = 0;
+  for (let index = 1; index <= 5; index++) {
+    if (burnerOn(data?.[`cooktop${index}CooktopState`])) {
+      slotsOn++;
     }
   }
   const counter = Number(data?.burnerOnCounter) || 0;
-  return {on: burners.some(b => b.on) || counter > 0, burners};
+  const burnersOn = Math.max(slotsOn, counter);
+  return {on: burnersOn > 0, burnersOn};
 }

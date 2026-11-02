@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { dishwasherProgramStatus, initialDishwasherTracker, nextDishwasherStep } = require('../dist/devices/dishwasherLogic.js');
+const { dishwasherProgramStatus, initialDishwasherTracker, nextDishwasherStep, dishwasherView, rinseLevelFor, rinseLevelPercent } =
+  require('../dist/devices/dishwasherLogic.js');
 
 function run(updates, tracker = { inProgram: false, lastRemainingSeconds: 0 }, values) {
   const events = [];
@@ -56,4 +57,43 @@ test('dishwasher: uses the model-specific state values when they differ', () => 
   const values = { running: 'DW_RUN', paused: 'DW_PAUSE', completed: 'DW_DONE' };
   assert.deepEqual(run([{ state: 'DW_RUN', remainTimeMinute: 50 }, 'DW_PAUSE', 'DW_DONE'], undefined, values),
     ['started@DW_RUN', 'finished@DW_DONE']);
+});
+
+const view = (data, lastRinseLevel = 'LEVEL_2') => dishwasherView(data, { lastRinseLevel });
+
+test('dishwasher view: running shows active, in use, time left and program length', () => {
+  const v = view({ state: 'RUNNING', process: 'WASHING', remainTimeHour: 1, remainTimeMinute: 30, initialTimeHour: 2, initialTimeMinute: 15, door: 'CLOSE' });
+  assert.equal(v.active, true);
+  assert.equal(v.inUse, true);
+  assert.equal(v.remainingSeconds, 5400);
+  assert.equal(v.setDurationSeconds, 8100);
+  assert.equal(v.doorClosed, true);
+});
+
+test('dishwasher view: a delayed start that has not begun is not in use', () => {
+  const v = view({ state: 'RUNNING', process: 'RESERVED', delayStart: 'ON', remainTimeHour: 3 });
+  assert.equal(v.inUse, false);
+  assert.equal(v.active, true);
+});
+
+test('dishwasher view: off and standby are inactive; program length is kept from before', () => {
+  for (const state of ['POWEROFF', 'STANDBY']) {
+    const v = view({ state, remainTimeMinute: 10, initialTimeHour: 2 });
+    assert.equal(v.active, false);
+    assert.equal(v.inUse, false);
+    assert.equal(v.setDurationSeconds, null, 'null means keep the last value');
+  }
+});
+
+test('dishwasher view: door uses the model value for closed when given', () => {
+  assert.equal(dishwasherView({ door: 'DOOR_SHUT' }, { lastRinseLevel: 'LEVEL_2', doorClosedValue: 'DOOR_SHUT' }).doorClosed, true);
+  assert.equal(view({ door: 'OPEN' }).doorClosed, false);
+});
+
+test('rinse aid: read while running, otherwise keep the last known level', () => {
+  assert.equal(rinseLevelFor({ state: 'RUNNING', rinseLevel: 'LEVEL_0' }, 'LEVEL_2'), 'LEVEL_0');
+  assert.equal(rinseLevelFor({ state: 'RUNNING' }, 'LEVEL_2'), 'LEVEL_1');
+  assert.equal(rinseLevelFor({ state: 'POWEROFF', rinseLevel: 'LEVEL_0' }, 'LEVEL_2'), 'LEVEL_2');
+  assert.deepEqual(['LEVEL_0', 'LEVEL_1', 'LEVEL_2', 'OTHER'].map(rinseLevelPercent), [0, 50, 100, 100]);
+  assert.equal(view({ state: 'RUNNING', rinseLevel: 'LEVEL_0' }).rinseLow, true);
 });

@@ -5,6 +5,7 @@
 * Washer/dryer logic moved into pure, unit-tested functions (`src/devices/washerDryerLogic.ts`); the accessory class only wires them to HomeKit.
 * "Program Finished" fires only when a program completes (END, or dryer COOLDOWN; or power-off with a minute or less left), once per program. Stopping, cancelling, powering off mid-cycle, pausing or an error no longer trigger it, repeated end messages do not re-trigger it, and restarts are handled (a restart mid-program still reports the finish; a restart after it does not).
 * A missing `state` in LG's status is treated as off; it was treated as running.
+* Dishwasher rewritten as thin HomeKit wiring over pure, tested rules (`dishwasherLogic.ts`): on/running (a delayed start that has not begun is not "in use"), time left, program length, door, rinse-aid level. The unpublished Television/status-text code was removed (791 to 189 lines); the published valve, door and Program Finished services are unchanged.
 * Dishwasher "Program Finished" uses the same rules (shared `programTracking.ts`): once per program at completion, not on stop/cancel/power cut, restarts handled; the model's own state values are used.
 * Washers/dryers that LG reports offline still show as off, and now also raise the HomeKit fault flag.
 

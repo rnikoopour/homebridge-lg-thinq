@@ -84,7 +84,7 @@ The `LGThinQ` platform config is unchanged.
 - `language` Required. Your account language code, e.g., en-US, vi-VN.
 - `devices` List devices you want add to homebridge, leave it empty if you want add all devices. See [Device configuration](#device-configuration).
 - `thinq1` Optional. Enable thinq1 device support
-- `refresh_interval` Optional. Seconds between status polls (default 5): ThinQ1 devices rely on this polling, ThinQ2 devices use it as a backup to real-time updates. Keep it above 30 with ThinQ1 devices, or LG may block the account.
+- `refresh_interval` Optional. Seconds between status polls (default 60): ThinQ1 devices rely on this polling, ThinQ2 devices use it as a backup in case real-time (MQTT) updates are missed. Keep it above 30 with ThinQ1 devices, or LG may block the account.
 - `platform` value always `LGThinQ`
 
 ## Plugin Authorization Setting

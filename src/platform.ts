@@ -48,7 +48,9 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     this.enable_thinq1 = config.thinq1 as boolean;
     this.config.devices = this.config.devices || [];
 
-    this.intervalTime = (config.refresh_interval || 5) * 1000;
+    // Seconds between full status polls: ThinQ1's only source of status, and ThinQ2's
+    // backup for updates MQTT misses. Matches the settings UI default.
+    this.intervalTime = (config.refresh_interval || 60) * 1000;
     this.ThinQ = new ThinQ(this, config, log);
 
     if (!config.country || !config.language || !((config.username && config.password) || config.refresh_token)) {
@@ -274,7 +276,7 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
           this.log.error('Failed to poll devices:', err?.message ?? err);
           this.log.debug(err);
         });
-      }, this.intervalTime); // every interval minute - backup method if mqtt not working
+      }, this.intervalTime); // backup in case MQTT misses updates
 
       this.log.info('Start MQTT listener for thinq2 device');
       await this.ThinQ.registerMQTTListener((data) => {
@@ -289,7 +291,7 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     }
 
     // polling thinq1 device
-    this.log.info('Start polling device data every '+ this.config.refresh_interval +' second.');
+    this.log.info('Start polling device data every '+ this.intervalTime / 1000 +' seconds.');
     const ThinQ = this.ThinQ;
     const interval = setInterval(() => void (async () => {
       try {

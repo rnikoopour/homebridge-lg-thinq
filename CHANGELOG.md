@@ -2,6 +2,7 @@
 
 ## v2.2.3
 
+* Fix: when `refresh_interval` is not set, devices are polled every 60 seconds (the settings UI default) instead of every 5 seconds. The settings UI only shows this option with ThinQ1 enabled, so most setups were polling LG every 5 seconds.
 * Docs: the README now covers sign-in options and every per-device option, replacing links to the upstream wiki; install from npm.
 * The settings screen links to this README instead of the upstream wiki.
 * The npm package no longer includes tests, sample data or lint config.

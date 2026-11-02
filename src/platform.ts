@@ -15,10 +15,10 @@ import Characteristics from './characteristics';
  * parse the user config and discover/register accessories with Homebridge.
  */
 export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
-  public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+  public readonly Service: typeof Service;
+  public readonly Characteristic: typeof Characteristic;
 
-  public readonly customCharacteristics: ReturnType<typeof Characteristics> = Characteristics(this.api.hap.Characteristic);
+  public readonly customCharacteristics: ReturnType<typeof Characteristics>;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
@@ -35,6 +35,12 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
+    // Assigned here, not as field initializers: class fields are initialized
+    // before constructor parameter properties such as `api` are set.
+    this.Service = api.hap.Service;
+    this.Characteristic = api.hap.Characteristic;
+    this.customCharacteristics = Characteristics(api.hap.Characteristic);
+
     this.events = new EventEmitter();
 
     this.enable_thinq1 = config.thinq1 as boolean;

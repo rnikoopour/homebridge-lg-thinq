@@ -260,7 +260,7 @@ export default class Microwave extends baseDevice {
     this.ovenService
       .getCharacteristic(this.platform.Characteristic.ActiveIdentifier)
       .on('set', (inputIdentifier, callback) => {
-        if (inputIdentifier > 9 || inputIdentifier < 1) {
+        if (Number(inputIdentifier) > 9 || Number(inputIdentifier) < 1) {
           this.inputID = 1;
         } else {
           this.inputID = inputIdentifier as number;
@@ -500,7 +500,7 @@ export default class Microwave extends baseDevice {
         callback(null, currentValue);
       })
       .on('set', (value, callback) => {
-        if (value >= (6000)) {
+        if (Number(value) >= 6000) {
           value = 6000 - 1;
         }
         this.timerAlarmSec = value as number;
@@ -587,7 +587,7 @@ export default class Microwave extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'CONV_BAKE';
+          this.ovenCommandList.ovenMode = 'CONV_BAKE';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -604,7 +604,7 @@ export default class Microwave extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'COMBI_ROAST';
+          this.ovenCommandList.ovenMode = 'COMBI_ROAST';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -621,7 +621,7 @@ export default class Microwave extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'TIME_DEFROST';
+          this.ovenCommandList.ovenMode = 'TIME_DEFROST';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -637,7 +637,7 @@ export default class Microwave extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'INVERTER_DEFROST';
+          this.ovenCommandList.ovenMode = 'INVERTER_DEFROST';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -654,7 +654,7 @@ export default class Microwave extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'AIRFRY';
+          this.ovenCommandList.ovenMode = 'AIRFRY';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -670,7 +670,7 @@ export default class Microwave extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'PROOF';
+          this.ovenCommandList.ovenMode = 'PROOF';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -687,7 +687,7 @@ export default class Microwave extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'WARM';
+          this.ovenCommandList.ovenMode = 'WARM';
           // this.timeModeCommand();
         }
         this.updateOvenModeSwitch();

@@ -172,14 +172,14 @@ async function buildOven(ovenState) {
   const fixture = ovenFixture();
   const data = { ...fixture.device, deviceId: OVEN_ID };
   if (ovenState) {
-    data.snapshot = { ...data.snapshot, ovenState: fixture[ovenState] };
+    data.snapshot = { ...data.snapshot, ovenState: typeof ovenState === 'string' ? fixture[ovenState] : ovenState };
   }
   const device = new Device(data);
   device.deviceModel = new DeviceModel(fixture.model);
   const { platform, calls } = makePlatform([{ id: OVEN_ID, name: 'Oven' }]);
   stubThinQ(platform, [device]);
   await platform.discoverDevices();
-  return { accessory: calls.registered[0], OVEN_ID };
+  return { accessory: calls.registered[0], OVEN_ID, platform };
 }
 
 async function readAll(accessory) {
@@ -318,4 +318,50 @@ test('dishwasher: publishes only the valve, door and Program Finished services',
 
   const types = calls.registered[0].services.map(s => s.UUID).sort();
   assert.deepEqual(types, [Service.AccessoryInformation.UUID, Service.ContactSensor.UUID, Service.OccupancySensor.UUID, Service.Valve.UUID].sort());
+});
+
+
+test('oven: selecting a mode shows it on, Start sends it only when allowed, thermostat Off stops', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const idleRemoteOn = { ...ovenFixture().device.snapshot.ovenState, upperRemoteStart: 'ENABLE' };
+  const { accessory, platform } = await buildOven(idleRemoteOn);
+  const sent = [];
+  platform.ThinQ.deviceControl = async (_id, payload, _command, ctrlKey) => {
+    sent.push({ ctrlKey, ovenState: payload.dataSetList.ovenState });
+  };
+  const switchNamed = (name) => accessory.services.find(s => s.UUID === Service.Switch.UUID && s.displayName === name);
+  const on = (name) => switchNamed(name).getCharacteristic(Characteristic.On);
+
+  await on('Convection Bake Mode').handleSetRequest(true);
+  assert.equal(await on('Convection Bake Mode').handleGetRequest(), true, 'selected mode reads as on');
+  assert.equal(await on('Bake Mode').handleGetRequest(), false);
+
+  await on('Start Oven').handleSetRequest(true);
+  assert.equal(sent.length, 0, 'Monitor Only is on by default, so nothing is sent');
+
+  await on('Monitor Only Mode').handleSetRequest(false);
+  await on('Start Oven').handleSetRequest(true);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].ctrlKey, 'SetCookStart');
+  assert.equal(sent[0].ovenState.cmdOptionSetCookName, 'CONVECTION_BAKE');
+  assert.equal(sent[0].ovenState.setTargetTemperature, 350);
+
+  t.mock.timers.tick(1000);
+  const thermostat = accessory.services.find(s => s.isPrimaryService);
+  await thermostat.getCharacteristic(Characteristic.TargetHeatingCoolingState).handleSetRequest(Characteristic.TargetHeatingCoolingState.OFF);
+  assert.equal(sent[1].ctrlKey, 'SetCookStop');
+});
+
+test('oven: remote start disabled on the oven blocks commands even with Monitor Only off', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { accessory, platform } = await buildOven(null); // fixture: remote start disabled
+  let sent = 0;
+  platform.ThinQ.deviceControl = async () => {
+    sent++;
+  };
+  const on = (name) => accessory.services.find(s => s.displayName === name).getCharacteristic(Characteristic.On);
+  await on('Monitor Only Mode').handleSetRequest(false);
+  await on('Start Oven').handleSetRequest(true);
+  assert.equal(sent, 0);
+  assert.equal(await on('Monitor Only Mode').handleGetRequest(), true, 'shows as monitor only');
 });

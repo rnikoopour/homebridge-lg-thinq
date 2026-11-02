@@ -230,7 +230,7 @@ export default class Microwave extends baseDevice {
       })
       .onSet((value) => {
         if (value === 0) {
-          if (this.Status.data?.LWOState.includes('INITIAL')) {
+          if (this.Status.data?.LWOState?.includes('INITIAL')) {
             this.stopOven();
             this.timeOut = 1500;
             setTimeout(() => {
@@ -776,7 +776,7 @@ export default class Microwave extends baseDevice {
         return currentValue;
       })
       .onSet((value) => {
-        if (this.Status.data?.LWOTargetTemperatureUnit.includes('FAH')) {
+        if (this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH')) {
           this.ovenCommandList.ovenSetTemperature = Math.round(this.tempCtoF(value) / 5) * 5;
         } else {
           this.ovenCommandList.ovenSetTemperature = Math.round((value as number) / 5) * 5;
@@ -1095,7 +1095,7 @@ export default class Microwave extends baseDevice {
   }
 
   onStatus() {
-    if (!this.Status.data?.LWOState.includes('INITIAL')) {
+    if (!this.Status.data?.LWOState?.includes('INITIAL')) {
       return true;
     } else {
       return false;
@@ -1103,7 +1103,7 @@ export default class Microwave extends baseDevice {
   }
 
   lightVentState() {
-    if (!this.Status.data?.LWOState.includes('INITIAL') || this.Status.data?.mwoVentSpeedLevel != 0 || this.Status.data?.mwoLampLevel != 0) {
+    if (!this.Status.data?.LWOState?.includes('INITIAL') || this.Status.data?.mwoVentSpeedLevel != 0 || this.Status.data?.mwoLampLevel != 0) {
       return true;
     } else {
       return false;
@@ -1295,13 +1295,13 @@ export default class Microwave extends baseDevice {
   ovenCurrentTemperature() {
     /////Current Temp
     if (this.Status.data?.upperCurrentTemperatureValue != 0) {
-      if (this.Status.data?.LWOTargetTemperatureUnit.includes('FAH')) {
+      if (this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.upperCurrentTemperatureValue);
       } else {
         return 0.5 * Math.round(2 * this.Status.data?.upperCurrentTemperatureValue);
       }
     } else if (this.Status.data.LWOTargetTemperatureValue !== 0) {
-      if (this.Status.data?.LWOTargetTemperatureUnit.includes('FAH')) {
+      if (this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.LWOTargetTemperatureValue);
       } else {
         return 0.5 * Math.round(2 * this.Status.data?.LWOTargetTemperatureValue);
@@ -1318,7 +1318,7 @@ export default class Microwave extends baseDevice {
   ovenTargetTemperature() {
     ////Set temperature
     if (this.Status.data?.LWOTargetTemperatureValue != 0) {
-      if (this.Status.data?.LWOTargetTemperatureUnit.includes('FAH')) {
+      if (this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.LWOTargetTemperatureValue);
       } else {
         return 0.5 * Math.round(2 * this.Status.data?.LWOTargetTemperatureValue);
@@ -1514,15 +1514,15 @@ export default class Microwave extends baseDevice {
 
   oventOptions() {
     this.inputNameOptions = 'Settings: ';
-    if (this.Status.data?.LWOTargetTemperatureUnit.includes('FAH')) {
+    if (this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH')) {
       this.inputNameOptions += 'Temp in °F';
     } else {
       this.inputNameOptions += 'Temp in °C';
     }
-    if (!this.Status.data?.LWOSabbath.includes('NOT')) {
+    if (!this.Status.data?.LWOSabbath?.includes('NOT')) {
       this.inputNameOptions += ', Sabbath On';
     }
-    if (this.Status.data?.LWOControlLock.includes('ENA')) {
+    if (this.Status.data?.LWOControlLock?.includes('ENA')) {
       this.inputNameOptions += ', Control Lock';
     }
     return this.nameLengthCheck(this.inputNameOptions);
@@ -1601,7 +1601,7 @@ export default class Microwave extends baseDevice {
   }
 
   ovenServiceActive() {
-    if (this.Status.data?.LWOState.includes('INITIAL') && this.Status.data?.mwoVentSpeedLevel == 0 && this.Status.data?.mwoLampLevel == 0) {
+    if (this.Status.data?.LWOState?.includes('INITIAL') && this.Status.data?.mwoVentSpeedLevel == 0 && this.Status.data?.mwoLampLevel == 0) {
       return 0;
     } else {
       return 1;
@@ -1620,7 +1620,7 @@ export default class Microwave extends baseDevice {
     //this.serviceLight.updateCharacteristic(Characteristic.On, isLampOn);
     //  this.serviceLight.updateCharacteristic(Characteristic.Brightness, ovenState['lampLevel']);
     if (!this.pauseUpdate) {
-      if (this.Status.data?.LWOState.includes('INITIAL')) {
+      if (this.Status.data?.LWOState?.includes('INITIAL')) {
         this.defaultTemp = 0;
       }
       if (this.ovenService.getCharacteristic(this.platform.Characteristic.Active).value != this.ovenServiceActive()) {
@@ -1643,7 +1643,7 @@ export default class Microwave extends baseDevice {
         }
       }
       ///// how to handle the time Here
-      if (!this.Status.data?.LWOManualCookName.includes('STAND')) {
+      if (!this.Status.data?.LWOManualCookName?.includes('STAND')) {
         if (this.firstStart) {
           this.courseStartString = this.ovenCookingStartTime();
         }
@@ -1734,8 +1734,8 @@ export default class Microwave extends baseDevice {
       this.ovenTimer.updateCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.showTimer ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN);
 
       /////////Temperature Monitor
-      if (this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits).value !== this.Status.data?.LWOTargetTemperatureUnit.includes('FAH') ? 1 : 0) {
-        this.ovenTempControl.updateCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, this.Status.data?.LWOTargetTemperatureUnit.includes('FAH') ? 1 : 0);
+      if (this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits).value !== this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH') ? 1 : 0) {
+        this.ovenTempControl.updateCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH') ? 1 : 0);
       }
       if (this.ovenTempControl.getCharacteristic(this.platform.Characteristic.CurrentTemperature).value !== this.ovenCurrentTemperature()) {
         this.ovenTempControl.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.ovenCurrentTemperature());

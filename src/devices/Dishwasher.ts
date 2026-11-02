@@ -170,8 +170,6 @@ export default class Dishwasher extends baseDevice {
     this.serviceDishwasher = accessory.getService(Valve) || accessory.addService(Valve, 'LG Dishwasher');
     this.serviceDishwasher.setPrimaryService(true);
     this.serviceDishwasher.setCharacteristic(Characteristic.Name, device.name);
-    this.serviceDishwasher.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.serviceDishwasher.setCharacteristic(this.platform.Characteristic.ConfiguredName, device.name);
     this.serviceDishwasher.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.IRRIGATION);
     this.serviceDishwasher.getCharacteristic(Characteristic.Active)
       .onSet(this.setActive.bind(this))
@@ -196,8 +194,6 @@ export default class Dishwasher extends baseDevice {
 
     // Door open state
     this.serviceDoorOpened = accessory.getService(ContactSensor) || accessory.addService(ContactSensor, 'Dishwasher Door');
-    this.serviceDoorOpened.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
-    this.serviceDoorOpened.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Dishwasher Door');
     this.serviceDoorOpened.getCharacteristic(this.platform.Characteristic.StatusActive)
       .on('get', this.getDoorStatus.bind(this));
     this.serviceDoorOpened.getCharacteristic(this.platform.Characteristic.BatteryLevel)

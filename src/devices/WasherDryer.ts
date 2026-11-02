@@ -72,6 +72,10 @@ export default class WasherDryer extends baseDevice {
     this.serviceWasherDryer.getCharacteristic(Characteristic.RemainingDuration).setProps({
       maxValue: 86400, // 1 day
     });
+    // Total program length; the Home app uses it with RemainingDuration for the countdown.
+    this.serviceWasherDryer.getCharacteristic(Characteristic.SetDuration).setProps({
+      maxValue: 86400,
+    });
 
     // only thinq2 support door lock status
     this.serviceDoorLock = accessory.getService(LockMechanism);
@@ -150,6 +154,9 @@ export default class WasherDryer extends baseDevice {
     this.serviceWasherDryer.updateCharacteristic(Characteristic.InUse, view.running ? 1 : 0);
     if (this.serviceWasherDryer.getCharacteristic(Characteristic.RemainingDuration).value !== view.remainingSeconds) {
       this.serviceWasherDryer.updateCharacteristic(Characteristic.RemainingDuration, view.remainingSeconds);
+    }
+    if (view.programSeconds > 0) {
+      this.serviceWasherDryer.updateCharacteristic(Characteristic.SetDuration, view.programSeconds);
     }
     this.serviceWasherDryer.updateCharacteristic(Characteristic.StatusFault,
       hasFault(view, online) ? Characteristic.StatusFault.GENERAL_FAULT : Characteristic.StatusFault.NO_FAULT);

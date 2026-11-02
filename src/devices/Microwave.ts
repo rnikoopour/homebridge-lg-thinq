@@ -195,7 +195,7 @@ export default class Microwave extends baseDevice {
       })
       .onGet(() => {
         let currentValue = false;
-        if (parseInt(this.Status.data?.LWOMGTPowerLevel) * 10 > 0) {
+        if (this.powerPercent() > 0) {
           currentValue = true;
         }
         return currentValue;
@@ -203,7 +203,7 @@ export default class Microwave extends baseDevice {
 
     this.microwavePower.getCharacteristic(this.platform.Characteristic.Brightness)
       .onGet(() => {
-        const currentValue = parseInt(this.Status.data?.LWOMGTPowerLevel) * 10;
+        const currentValue = this.powerPercent();
         return currentValue;
       })
       .onSet((value) => {
@@ -751,7 +751,9 @@ export default class Microwave extends baseDevice {
         }
 
       });
+    // HAP's defaults (0 and 10) are below these ranges; set a legal value first to avoid warnings.
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
+      .updateValue(22)
       .setProps({
         minValue: 10,
         maxValue: 233,
@@ -767,6 +769,7 @@ export default class Microwave extends baseDevice {
         return currentValue;
       });
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TargetTemperature)
+      .updateValue(38)
       .setProps({
         minValue: 38,
         maxValue: 233,
@@ -1266,17 +1269,17 @@ export default class Microwave extends baseDevice {
   ovenTemperature() {
     /////Current Temp
     let temperature = 'Microwave Oven Temperature Information';
-    if (this.Status.data?.upperCurrentTemperatureValue !== 0) {
+    if (Number(this.Status.data?.upperCurrentTemperatureValue) !== 0) {
       temperature = 'Current Temp is ' + this.Status.data?.upperCurrentTemperatureValue + '°';
     }
 
     ////Set temperature
-    if (this.Status.data?.LWOTargetTemperatureValue !== 0) {
+    if (Number(this.Status.data?.LWOTargetTemperatureValue) !== 0) {
       temperature += ' With Set Temp ' + this.Status.data?.LWOTargetTemperatureValue + '°';
     }
 
     ////Default
-    if (this.Status.data.LWOTargetTemperatureValue === 0 && this.defaultTemp !== 0 && this.Status.data.upperCurrentTemperatureValue === 0) {
+    if (Number(this.Status.data.LWOTargetTemperatureValue) === 0 && this.defaultTemp !== 0 && Number(this.Status.data.upperCurrentTemperatureValue) === 0) {
       temperature += 'Current Temp is ' + this.defaultTemp + '°' + ' With Set Temp ' + this.defaultTemp + '°';
     }
 
@@ -1284,6 +1287,10 @@ export default class Microwave extends baseDevice {
   }
 
   ovenCurrentTemperature() {
+    return Math.min(233, Math.max(10, this.rawCurrentTemperature()));
+  }
+
+  rawCurrentTemperature() {
     /////Current Temp
     if (Number(this.Status.data?.upperCurrentTemperatureValue) !== 0) {
       if (this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH')) {
@@ -1291,7 +1298,7 @@ export default class Microwave extends baseDevice {
       } else {
         return 0.5 * Math.round(2 * this.Status.data?.upperCurrentTemperatureValue);
       }
-    } else if (this.Status.data.LWOTargetTemperatureValue !== 0) {
+    } else if (Number(this.Status.data.LWOTargetTemperatureValue) !== 0) {
       if (this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.LWOTargetTemperatureValue);
       } else {
@@ -1307,6 +1314,10 @@ export default class Microwave extends baseDevice {
   }
 
   ovenTargetTemperature() {
+    return Math.min(233, Math.max(38, this.rawTargetTemperature()));
+  }
+
+  rawTargetTemperature() {
     ////Set temperature
     if (Number(this.Status.data?.LWOTargetTemperatureValue) !== 0) {
       if (this.Status.data?.LWOTargetTemperatureUnit?.includes('FAH')) {
@@ -1500,7 +1511,7 @@ export default class Microwave extends baseDevice {
 
   ///////////
   currentHeatingState() {
-    if (Number(this.Status.data?.upperCurrentTemperatureValue) !== 0 || this.defaultTemp !== 0 || this.Status.data.LWOTargetTemperatureValue !== 0) {
+    if (Number(this.Status.data?.upperCurrentTemperatureValue) !== 0 || this.defaultTemp !== 0 || Number(this.Status.data.LWOTargetTemperatureValue) !== 0) {
       return 1;
     } else {
       return 0;
@@ -1508,7 +1519,7 @@ export default class Microwave extends baseDevice {
   }
 
   targetHeatingState() {
-    if (this.Status.data.LWOTargetTemperatureValue !== 0 || this.defaultTemp !== 0) {
+    if (Number(this.Status.data.LWOTargetTemperatureValue) !== 0 || this.defaultTemp !== 0) {
       return 1;
     } else {
       return 0;
@@ -1722,12 +1733,12 @@ export default class Microwave extends baseDevice {
       if (this.ovenTempControl.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity).value !== this.localHumidity) {
         this.ovenTempControl.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.localHumidity);
       }
-      if (this.microwavePower.getCharacteristic(this.platform.Characteristic.On).value !== parseInt(this.Status.data?.LWOMGTPowerLevel) > 0 ? true : false) {
-        this.microwavePower.updateCharacteristic(this.platform.Characteristic.On, parseInt(this.Status.data?.LWOMGTPowerLevel) > 0 ? true : false);
+      if (this.microwavePower.getCharacteristic(this.platform.Characteristic.On).value !== this.powerPercent() > 0) {
+        this.microwavePower.updateCharacteristic(this.platform.Characteristic.On, this.powerPercent() > 0);
       }
 
-      if (this.microwavePower.getCharacteristic(this.platform.Characteristic.Brightness).value !== parseInt(this.Status.data?.LWOMGTPowerLevel)) {
-        this.microwavePower.updateCharacteristic(this.platform.Characteristic.Brightness, parseInt(this.Status.data?.LWOMGTPowerLevel));
+      if (this.microwavePower.getCharacteristic(this.platform.Characteristic.Brightness).value !== this.powerPercent()) {
+        this.microwavePower.updateCharacteristic(this.platform.Characteristic.Brightness, this.powerPercent());
       }
 
       if (this.serviceLight.getCharacteristic(this.platform.Characteristic.On).value !== this.Status.data?.mwoLampLevel > 0 ? true : false) {
@@ -1786,6 +1797,11 @@ export default class Microwave extends baseDevice {
     if (!oven) {
       return;
     }
+  }
+
+  /** LG power level (0-10) as a percentage; 0 when not reported. */
+  powerPercent() {
+    return Math.min(100, Math.max(0, (parseInt(this.Status.data?.LWOMGTPowerLevel) || 0) * 10));
   }
 
   public get Status() {

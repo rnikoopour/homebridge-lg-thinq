@@ -9,7 +9,7 @@ import * as forge from 'node-forge';
 import {DeviceModel} from './DeviceModel';
 import Helper from '../v1/helper';
 import {MonitorError, NotConnectedError} from '../errors';
-import {PLUGIN_NAME} from '../settings';
+import {PLUGIN_STORAGE_DIR} from '../settings';
 import {device as awsIotDevice} from 'aws-iot-device-sdk';
 import {URL} from 'url';
 import Persist from './Persist';
@@ -41,7 +41,7 @@ export class ThinQ {
       this.api.setUsernamePassword(config.username, config.password);
     }
 
-    this.persist = new Persist(Path.join(this.platform.api.user.storagePath(), PLUGIN_NAME, 'persist', 'devices'));
+    this.persist = new Persist(Path.join(this.platform.api.user.storagePath(), PLUGIN_STORAGE_DIR, 'persist', 'devices'));
   }
 
   public async devices() {

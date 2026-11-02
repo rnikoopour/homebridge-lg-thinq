@@ -26,10 +26,15 @@ test('view: oven off', () => {
   assert.equal(v.cookingMode, null);
   assert.equal(v.heating, false);
   assert.equal(v.targetTemperatureC, 38, 'LG reports 10 while off; clamped to the declared minimum');
-  assert.equal(v.currentTemperatureC, fToC(10), 'shows the target when there is no current reading');
+  assert.equal(v.currentTemperatureC, 22, 'off: room temperature, not the leftover target (10F would be -12C)');
   assert.equal(v.doorOpen, false);
   assert.equal(v.remoteStartEnabled, false);
   assert.equal(v.keepWarm, false);
+});
+
+test('view: preheating with no current reading shows the target', () => {
+  const v = ovenView({ ...baking, upperCurrentTemperatureValue: 0 });
+  assert.equal(v.currentTemperatureC, fToC(350));
 });
 
 test('view: baking at 350F', () => {

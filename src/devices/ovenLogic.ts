@@ -25,6 +25,7 @@ export type OvenMode = typeof OVEN_MODES[number];
 /** Declared HomeKit ranges (Celsius) for the oven and probe thermostats. */
 export const OVEN_TARGET_RANGE = { min: 38, max: 218 };
 export const PROBE_TARGET_RANGE = { min: 38, max: 285 };
+export const OVEN_CURRENT_RANGE = { min: 0, max: 218 };
 /** Shown when the oven reports no temperature (it is off). */
 export const IDLE_TEMPERATURE_C = 22;
 
@@ -84,12 +85,14 @@ export function ovenView(data: OvenState | null | undefined): OvenView {
   const ovenOn = state !== '' && !state.includes('INITIAL');
   const cookName = String(data?.upperManualCookName ?? '');
 
+  // No current reading: use the target while on (preheating), otherwise room temperature.
   let currentTemperatureC = IDLE_TEMPERATURE_C;
   if (current !== 0) {
     currentTemperatureC = toCelsius(current, fahrenheit);
-  } else if (target !== 0) {
+  } else if (ovenOn && target !== 0) {
     currentTemperatureC = toCelsius(target, fahrenheit);
   }
+  currentTemperatureC = clamp(currentTemperatureC, OVEN_CURRENT_RANGE);
 
   return {
     ovenOn,

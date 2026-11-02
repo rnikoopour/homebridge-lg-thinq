@@ -97,6 +97,8 @@ export default class Oven extends baseDevice {
       .setProps({minValue: 0, maxValue: OVEN_TARGET_RANGE.max, minStep: 0.5})
       .onGet(() => this.view.currentTemperatureC);
     this.ovenTempControl.getCharacteristic(Characteristic.TargetTemperature)
+      // HAP's default (10) is below our minimum: move it into range before narrowing the props.
+      .updateValue(OVEN_TARGET_RANGE.min)
       .setProps({minValue: OVEN_TARGET_RANGE.min, maxValue: OVEN_TARGET_RANGE.max, minStep: 0.5})
       .onGet(() => this.view.targetTemperatureC)
       .onSet((value) => {
@@ -116,6 +118,7 @@ export default class Oven extends baseDevice {
       .setProps({minValue: 0, maxValue: PROBE_TARGET_RANGE.max, minStep: 0.1})
       .onGet(() => this.view.probeCurrentTemperatureC);
     this.probeTempControl.getCharacteristic(Characteristic.TargetTemperature)
+      .updateValue(PROBE_TARGET_RANGE.min)
       .setProps({minValue: PROBE_TARGET_RANGE.min, maxValue: PROBE_TARGET_RANGE.max, minStep: 0.1})
       .onGet(() => this.view.probeTargetTemperatureC)
       .onSet((value) => {

@@ -5,6 +5,7 @@
 * Platform decisions moved into pure, unit-tested functions (`src/platformLogic.ts`): which devices are published, config name overrides, which accessories (and UUIDs) each device gets, service name prefixes, and keeping the cache when LG returns no devices.
 * Fix: an appliance name ending or starting with punctuation (e.g. "Oven (Upper)") was prefixed onto its service names again on every restart.
 * Microwave: all loose `==`/`!=` comparisons replaced with strict ones (LG fields are converted with `Number()` first, so behavior is unchanged); its time fields are summed as numbers via the shared `hmsSeconds`. `eqeqeq` is now a lint error.
+* Microwave fixes found with a spoofed microwave in tests (`test/microwave.test.mjs`): power level showed NaN when LG omitted it, and status updates pushed the raw 0-10 level instead of a percentage; temperature fields sent as strings were misread ("0" became -18 C); thermostat temperatures are kept within HomeKit's range, and setup no longer logs illegal-value warnings.
 
 ## v2.2.0
 

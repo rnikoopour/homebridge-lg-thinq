@@ -622,12 +622,11 @@ export default class Oven extends baseDevice {
         minStep: 0.5,
       })
       .onGet(() => {
-        const currentValue = this.ovenTargetTemperature();
-        // this.platform.log('Get Target Temp' + this.ovenTargetTemperature())
-        return currentValue;
+        // LG reports values below the oven's range (e.g. while off); keep within the declared props.
+        return Math.min(Math.max(this.ovenTargetTemperature(), 38), 218);
       })
       .onSet((value) => {
-        if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
+        if (this.Status.data?.upperCurrentTemperatureUnit?.includes('FAH')) {
           this.ovenCommandList.ovenSetTemperature = this.tempCtoF(value);
         } else {
           this.ovenCommandList.ovenSetTemperature = Math.round(value);
@@ -672,11 +671,10 @@ export default class Oven extends baseDevice {
         minStep: 0.1,
       })
       .onGet(() => {
-        const currentValue = this.probeTargetTemperature();
-        return currentValue;
+        return Math.min(Math.max(this.probeTargetTemperature(), 38), 285);
       })
       .onSet((value) => {
-        if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
+        if (this.Status.data?.upperCurrentTemperatureUnit?.includes('FAH')) {
           this.ovenCommandList.probeTemperature = this.tempCtoF(value);
         } else {
           this.ovenCommandList.probeTemperature = Math.round(value);
@@ -1095,13 +1093,13 @@ export default class Oven extends baseDevice {
   ovenCurrentTemperature() {
     /////Current Temp
     if (this.Status.data?.upperCurrentTemperatureValue != 0) {
-      if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
+      if (this.Status.data?.upperCurrentTemperatureUnit?.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.upperCurrentTemperatureValue);
       } else {
         return 0.5 * Math.round(2 * this.Status.data?.upperCurrentTemperatureValue);
       }
     } else if (this.Status.data?.upperCurrentTemperatureValue == 0 && this.Status.data?.upperTargetTemperatureValue != 0) {
-      if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
+      if (this.Status.data?.upperCurrentTemperatureUnit?.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.upperTargetTemperatureValue);
       } else {
         return 0.5 * Math.round(2 * this.Status.data?.upperTargetTemperatureValue);
@@ -1114,7 +1112,7 @@ export default class Oven extends baseDevice {
   ovenTargetTemperature() {
     ////Set temperature
     if (this.Status.data?.upperTargetTemperatureValue != 0) {
-      if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
+      if (this.Status.data?.upperCurrentTemperatureUnit?.includes('FAH')) {
         return this.tempFtoC(this.Status.data?.upperTargetTemperatureValue);
       } else {
         return 0.5 * Math.round(2 * this.Status.data?.upperTargetTemperatureValue);
@@ -1269,7 +1267,7 @@ export default class Oven extends baseDevice {
 
   oventOptions() {
     this.inputNameOptions = 'Settings: ';
-    if (this.Status.data?.upperCurrentTemperatureUnit.includes('FAH')) {
+    if (this.Status.data?.upperCurrentTemperatureUnit?.includes('FAH')) {
       this.inputNameOptions += 'Temp in °F';
     } else {
       this.inputNameOptions += 'Temp in °C';
@@ -1719,9 +1717,9 @@ export default class Oven extends baseDevice {
       this.burner5.updateCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.showBurner5 ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN);
 
       /////////Temperature Monitor
-      if (this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits).value !== this.Status.data?.upperCurrentTemperatureUnit.includes('FAH') ? 1 : 0) {
-        this.ovenTempControl.updateCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, this.Status.data?.upperCurrentTemperatureUnit.includes('FAH') ? 1 : 0);
-        this.probeTempControl.updateCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, this.Status.data?.upperCurrentTemperatureUnit.includes('FAH') ? 1 : 0);
+      if (this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits).value !== this.Status.data?.upperCurrentTemperatureUnit?.includes('FAH') ? 1 : 0) {
+        this.ovenTempControl.updateCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, this.Status.data?.upperCurrentTemperatureUnit?.includes('FAH') ? 1 : 0);
+        this.probeTempControl.updateCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, this.Status.data?.upperCurrentTemperatureUnit?.includes('FAH') ? 1 : 0);
       }
       if (this.ovenTempControl.getCharacteristic(this.platform.Characteristic.CurrentTemperature).value !== this.ovenCurrentTemperature()) {
         this.ovenTempControl.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.ovenCurrentTemperature());

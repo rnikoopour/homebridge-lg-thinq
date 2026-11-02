@@ -182,6 +182,12 @@ export class ThinQ {
           this.log.debug('ThinQ Device Did Not Received the Command');
           return false;
         }
+      })
+      // Callers fire commands from HomeKit handlers and timers; a rejection here would crash the bridge.
+      .catch(err => {
+        this.log.error('Failed to send command to device:', err?.message ?? err);
+        this.log.debug(err);
+        return false;
       });
   }
 
@@ -288,16 +294,24 @@ export class ThinQ {
         }
       });
       device.on('message', (topic, payload) => {
-        callback(JSON.parse(payload.toString()));
         this.log.debug('mqtt message received:', payload.toString());
+        try {
+          callback(JSON.parse(payload.toString()));
+        } catch (err) {
+          this.log.error('Failed to handle MQTT message:', (err as Error)?.message ?? err);
+          this.log.debug(String((err as Error)?.stack ?? err));
+        }
       });
       device.on('offline', () => {
         device.end();
 
         this.log.info('MQTT disconnected, retrying in 60 seconds!');
-        setTimeout(async () => {
-          await connectToMqtt();
-        }, 60000);
+        const reconnect = () => connectToMqtt().catch(err => {
+          this.log.error('MQTT reconnect failed, retrying in 60 seconds:', err?.message ?? err);
+          this.log.debug(err);
+          setTimeout(() => void reconnect(), 60000);
+        });
+        setTimeout(() => void reconnect(), 60000);
       });
     };
 

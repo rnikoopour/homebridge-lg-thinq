@@ -43,7 +43,7 @@ export default class AC extends AirConditioner {
     const { TargetFanState } = this.platform.Characteristic;
 
     const windStrength = value === TargetFanState.AUTO ? 8 : FanSpeed.HIGH; // 8 mean fan auto mode
-    this.platform.ThinQ?.thinq1DeviceControl(device, 'WindStrength', windStrength);
+    void this.platform.ThinQ?.thinq1DeviceControl(device, 'WindStrength', windStrength);
   }
 
   async setJetModeActive(value: CharacteristicValue) {
@@ -84,7 +84,7 @@ export default class AC extends AirConditioner {
     const device: Device = this.accessory.context.device;
     const windStrength = parseInt(Object.keys(FanSpeed)[speedValue - 1]) || FanSpeed.HIGH;
 
-    this.platform.ThinQ?.thinq1DeviceControl(device, 'WindStrength', windStrength);
+    void this.platform.ThinQ?.thinq1DeviceControl(device, 'WindStrength', windStrength);
   }
 
   async setSwingMode(value: CharacteristicValue) {

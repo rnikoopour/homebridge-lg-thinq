@@ -126,7 +126,7 @@ export default class AirPurifier extends baseDevice {
 
     const device: Device = this.accessory.context.device;
     const isOn = value as boolean ? 1 : 0;
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.miscFuncState.airFast',
       dataValue: isOn as number,
     }).then(() => {
@@ -143,7 +143,7 @@ export default class AirPurifier extends baseDevice {
     }
 
     this.platform.log.debug('Set Active State ->', value);
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.operation',
       dataValue: isOn as number,
     }).then(() => {
@@ -159,7 +159,7 @@ export default class AirPurifier extends baseDevice {
     }
 
     this.platform.log.debug('Set Target State ->', value);
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.opMode',
       dataValue: value as boolean ? 16 : 14,
     });
@@ -174,7 +174,7 @@ export default class AirPurifier extends baseDevice {
     const device: Device = this.accessory.context.device;
     const values = Object.keys(RotateSpeed);
     const windStrength = parseInt(values[Math.round((value as number)) - 1]) || RotateSpeed.EXTRA;
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.windStrength',
       dataValue: windStrength,
     }).then(() => {
@@ -190,7 +190,7 @@ export default class AirPurifier extends baseDevice {
 
     const device: Device = this.accessory.context.device;
     const isSwing = value as boolean ? 1 : 0;
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.circulate.rotate',
       dataValue: isSwing,
     }).then(() => {
@@ -217,7 +217,7 @@ export default class AirPurifier extends baseDevice {
       return;
     }
 
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey,
       dataValue: isLightOn,
     }).then(() => {

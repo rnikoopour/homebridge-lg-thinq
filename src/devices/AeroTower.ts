@@ -54,7 +54,7 @@ export default class AeroTower extends AirPurifier {
 
     const device: Device = this.accessory.context.device;
     const isLightOn = value as boolean ? 1 : 0;
-    this.platform.ThinQ?.deviceControl(device.id, {
+    void this.platform.ThinQ?.deviceControl(device.id, {
       dataKey: 'airState.lightingState.displayControl',
       dataValue: isLightOn,
     }).then(() => {
@@ -65,7 +65,7 @@ export default class AeroTower extends AirPurifier {
 
   protected setUVMode(value: CharacteristicValue) {
     const uvModeValue = value ? 1 : 0;
-    this.platform.ThinQ?.deviceControl(this.accessory.context.device, {
+    void this.platform.ThinQ?.deviceControl(this.accessory.context.device, {
       dataKey: 'airState.miscFuncState.Uvnano',
       dataValue: uvModeValue,
     }).then(() => {
@@ -79,7 +79,7 @@ export default class AeroTower extends AirPurifier {
     const values = [LightBrightness.LEVEL_1, LightBrightness.LEVEL_2, LightBrightness.LEVEL_3];
 
     if (typeof values[brightnessValue] !== 'undefined') {
-      this.platform.ThinQ?.deviceControl(this.accessory.context.device, {
+      void this.platform.ThinQ?.deviceControl(this.accessory.context.device, {
         dataKey: 'airState.lightingState.displayControl',
         dataValue: values[brightnessValue],
       }).then(() => {

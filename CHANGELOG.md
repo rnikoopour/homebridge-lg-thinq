@@ -1,5 +1,15 @@
 # Change Log
 
+## v2.2.2
+
+* Fix: errors that could restart the whole Homebridge child bridge are now caught and logged (Homebridge shuts the bridge down on any uncaught exception, including unhandled promise rejections):
+  * a device command that fails (network error, LG API error) on any appliance;
+  * an MQTT message that is not valid JSON, or that a device fails to apply;
+  * a failed MQTT reconnect (it now keeps retrying every 60 seconds instead of giving up);
+  * a failed 5-minute backup poll, or a failed device unregister.
+* ThinQ1 polling errors other than "manual process needed" are now logged instead of silently ignored.
+* `@typescript-eslint/no-floating-promises` and `no-misused-promises` are now lint errors.
+
 ## v2.2.1
 
 * Platform decisions moved into pure, unit-tested functions (`src/platformLogic.ts`): which devices are published, config name overrides, which accessories (and UUIDs) each device gets, service name prefixes, and keeping the cache when LG returns no devices.

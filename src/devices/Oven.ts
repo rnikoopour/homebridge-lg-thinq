@@ -219,7 +219,7 @@ export default class Oven extends baseDevice {
     }, MOMENTARY_RESET_MS);
 
     this.platform.log.debug(`[${this.accessory.context.device.name}] ${ctrlKey}: ${JSON.stringify(ovenState)}`);
-    this.platform.ThinQ?.deviceControl(this.accessory.context.device.id, {
+    void this.platform.ThinQ?.deviceControl(this.accessory.context.device.id, {
       dataKey: null,
       dataValue: null,
       dataSetList: {ovenState},

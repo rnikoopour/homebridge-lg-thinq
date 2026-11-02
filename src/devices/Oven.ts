@@ -152,7 +152,8 @@ export default class Oven extends baseDevice {
 
     // Drop any Television/InputSource services restored from the cache.
     for (const service of [...this.accessory.services]) {
-      if (service.UUID === this.platform.Service.Television.UUID || service.UUID === this.platform.Service.InputSource.UUID) {
+      if (service.UUID === this.platform.Service.Television.UUID || service.UUID === this.platform.Service.InputSource.UUID
+        || service.UUID === this.platform.Service.Valve.UUID) {
         this.accessory.removeService(service);
       }
     }
@@ -306,8 +307,9 @@ export default class Oven extends baseDevice {
     this.ovenService.addLinkedService(this.burner5);
 
     //////////Timers
-    this.ovenTimerService = this.accessory.getService('Oven Cook Time') ||
-      this.accessory.addService(this.platform.Service.Valve, 'Oven Cook Time', 'NicoCataGaTa-OvenT2');
+    // The timers are kept detached (not published): as irrigation valves they made
+    // the Home app draw the oven as a sprinkler.
+    this.ovenTimerService = new this.platform.Service.Valve('Oven Cook Time', 'NicoCataGaTa-OvenT2');
     this.ovenTimerService.setCharacteristic(Characteristic.Name, 'Oven Cook Time');
     this.ovenTimerService.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.IRRIGATION);
     this.ovenTimerService.getCharacteristic(Characteristic.Active)
@@ -353,8 +355,7 @@ export default class Oven extends baseDevice {
         this.ovenCommandList.ovenSetDuration = value;
         callback(null);
       });
-    this.ovenAlarmService = this.accessory.getService('Oven Timer') ||
-      this.accessory.addService(this.platform.Service.Valve, 'Oven Timer', 'NicoCataGaTa-OvenT32');
+    this.ovenAlarmService = new this.platform.Service.Valve('Oven Timer', 'NicoCataGaTa-OvenT32');
     this.ovenAlarmService.setCharacteristic(Characteristic.Name, 'Oven Timer');
     this.ovenAlarmService.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.IRRIGATION);
     this.ovenAlarmService.getCharacteristic(Characteristic.Active)

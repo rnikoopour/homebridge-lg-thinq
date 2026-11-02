@@ -170,7 +170,8 @@ export default class Dishwasher extends baseDevice {
     this.serviceDishwasher = accessory.getService(Valve) || accessory.addService(Valve, 'LG Dishwasher');
     this.serviceDishwasher.setPrimaryService(true);
     this.serviceDishwasher.setCharacteristic(Characteristic.Name, device.name);
-    this.serviceDishwasher.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.IRRIGATION);
+    // Same faucet-type valve as the washer and dryer.
+    this.serviceDishwasher.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.WATER_FAUCET);
     this.serviceDishwasher.getCharacteristic(Characteristic.Active)
       .onSet(this.setActive.bind(this))
       .updateValue(Characteristic.Active.INACTIVE)

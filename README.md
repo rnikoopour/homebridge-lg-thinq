@@ -6,10 +6,7 @@
 
 # Homebridge LG ThinQ
 
-[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
-[![npm](https://img.shields.io/npm/v/homebridge-lg-thinq/latest?label=latest)](https://www.npmjs.com/package/homebridge-lg-thinq)
-[![npm](https://img.shields.io/npm/dt/homebridge-lg-thinq)](https://www.npmjs.com/package/homebridge-lg-thinq)
-[![join-discord](https://badgen.net/badge/icon/discord?icon=discord&label=homebridge-lg-thinq)](https://discord.gg/wEfQpCDtS7)
+> **Maintained fork** by [rnikoopour](https://github.com/rnikoopour) of [nVuln/homebridge-lg-thinq](https://github.com/nVuln/homebridge-lg-thinq) (Apache-2.0), based on upstream v1.8.11. See [CHANGELOG.md](CHANGELOG.md) for what changed. Install from this repo's [releases](https://github.com/rnikoopour/homebridge-lg-thinq/releases), not npm.
 
 ## Overview
 
@@ -93,8 +90,8 @@ for more device support please open issue request.
 
 ## Support
 
-If you have a question, please [start a discussion](https://github.com/nVuln/homebridge-lg-thinq/discussions/new) or leave a message at [discord channel](https://discord.gg/wEfQpCDtS7).  
-If you would like to report a bug, please [open an issue](https://github.com/nVuln/homebridge-lg-thinq/issues/new/choose).
+If you have a question, please [open an issue](https://github.com/rnikoopour/homebridge-lg-thinq/issues/new).  
+If you would like to report a bug, please [open an issue](https://github.com/rnikoopour/homebridge-lg-thinq/issues/new).
 
 ## CLI Usage
 

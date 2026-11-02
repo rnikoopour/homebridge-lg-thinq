@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.0.0
+
+* Published as `@rnikoopour/homebridge-lg-thinq` (rnikoopour's maintained fork of nVuln/homebridge-lg-thinq, based on 1.8.11). Breaking: the package name changed. Existing installs of `homebridge-lg-thinq` keep their accessories only if the cached accessories are relabelled to the new plugin name before the first start (see README).
+* Persisted ThinQ device data stays under `homebridge-lg-thinq/` in the Homebridge storage path, so it is reused.
+* Includes the unreleased 1.9.2 changes: prefixed Name/ConfiguredName on every secondary service, faucet-type dishwasher valve, oven timer valves no longer published, dishwasher/oven services linked to their primary service.
+
 ## v1.9.1
 
 * Names are published only through each service's Name (set from the Homebridge config), like homebridge-pihole. The writable ConfiguredName characteristic is no longer published and is stripped from cached accessories.

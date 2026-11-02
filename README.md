@@ -18,9 +18,27 @@ A plugin for interacting with the "LG ThinQ" system, which can control new LG sm
 
 ## Installation
 
+Search for `@rnikoopour/homebridge-lg-thinq` in the Homebridge UI, or:
+
 ```
-npm i -g homebridge-lg-thinq
+npm i -g @rnikoopour/homebridge-lg-thinq
 ```
+
+### Migrating from `homebridge-lg-thinq`
+
+The package name changed, so Homebridge would treat existing accessories as new
+(and HomeKit would drop their rooms and automations). To keep them, stop
+Homebridge, uninstall `homebridge-lg-thinq`, install this package, and relabel the
+cached accessories before starting Homebridge again:
+
+```
+cd <homebridge storage path>/accessories
+# cachedAccessories (main bridge) or cachedAccessories.<child bridge id>
+jq '(.[] | select(.plugin == "homebridge-lg-thinq") | .plugin) = "@rnikoopour/homebridge-lg-thinq"' \
+  cachedAccessories.XXXX > tmp && mv tmp cachedAccessories.XXXX
+```
+
+The `LGThinQ` platform config is unchanged.
 
 # Configuration
 

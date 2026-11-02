@@ -27,12 +27,12 @@ export default function AirState(deviceModel: DeviceModel, decodedMonitor) {
   };
 
   if (deviceModel.value('TempCur')) {
-    // eslint-disable-next-line max-len
+
     airState['airState.tempState.current'] = Math.max(airState['airState.tempState.current'], (deviceModel.value('TempCur') as RangeValue).min);
   }
 
   if (deviceModel.value('TempCfg')) {
-    // eslint-disable-next-line max-len
+
     airState['airState.tempState.target'] = Math.max(airState['airState.tempState.target'], (deviceModel.value('TempCfg') as RangeValue).min);
   }
 

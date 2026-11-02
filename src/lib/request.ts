@@ -7,7 +7,7 @@ import {
   TokenExpiredErrorCode,
   TokenExpiredError,
   NotConnectedErrorCodes,
-} from "../errors";
+} from '../errors';
 import axiosRetry from 'axios-retry';
 
 const client = axios.create({

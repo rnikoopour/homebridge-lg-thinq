@@ -16,7 +16,7 @@ export enum WasherState {
   RINSEHOLD = '@WM_STATE_RINSEHOLD_W',
   WASH_REFRESHING = '@WM_STATE_WASH_REFRESHING_W',
   STEAMSOFTENING = '@WM_STATE_STEAMSOFTENING_W',
-  ERROR = '@WM_STATE_ERROR_W'
+  ERROR = '@WM_STATE_ERROR_W',
 }
 
 export enum RemoteStart {
@@ -33,7 +33,7 @@ export enum SoilWash {
   NO_SOILWASH = '-',
   SOILWASH_TURBO_WASH = '@WM_FL24_TITAN_SOIL_LIGHT_W',
   SOILWASH_TIMESAVE = '@WM_FL24_TITAN_SOIL_NORMAL_W',
-  SOILWASH_NORMAL = '@WM_FL24_TITAN_SOIL_HEAVY_W'
+  SOILWASH_NORMAL = '@WM_FL24_TITAN_SOIL_HEAVY_W',
 }
 
 export default function WasherDryer(deviceModel: DeviceModel, decodedMonitor) {

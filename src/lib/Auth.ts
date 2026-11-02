@@ -90,7 +90,7 @@ export class Auth {
       'Access-Control-Allow-Origin': '*',
       'Accept-Encoding': 'gzip, deflate, br',
       'Accept-Language': 'en-US,en;q=0.9',
-      // eslint-disable-next-line max-len
+
       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36 Edg/93.0.961.44',
     };
     // create emp session and get access token
@@ -243,7 +243,7 @@ export class Auth {
       }).then(res => res.data.lgedmRoot);
 
       this.lgeapi_url = gateway.oauthUri + '/';
-    } catch (err) {
+    } catch {
       // ignore this error
     }
 

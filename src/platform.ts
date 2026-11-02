@@ -130,6 +130,30 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
+  /**
+   * Prefix every secondary service's published Name with the appliance name, e.g.
+   * "Program Finished" -> "Washer Program Finished", "Stop Oven" -> "Oven Stop".
+   * Only the Name characteristic changes; service displayName/subtype (used to
+   * find cached services) stay as they are.
+   */
+  private prefixServiceNames(accessory: PlatformAccessory, deviceName: string) {
+    const { Service, Characteristic } = this.api.hap;
+    const escaped = deviceName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const deviceWord = new RegExp('\\b' + escaped + '\\b', 'gi');
+
+    for (const service of accessory.services) {
+      if (service.isPrimaryService || service.UUID === Service.AccessoryInformation.UUID) {
+        continue;
+      }
+      const current = String(service.getCharacteristic(Characteristic.Name).value ?? service.displayName ?? '');
+      const base = current.replace(deviceWord, ' ').replace(/^[\s-]+|[\s-]+$/g, '').replace(/\s+/g, ' ');
+      const name = base ? deviceName + ' ' + base : deviceName;
+      if (name !== current) {
+        service.setCharacteristic(Characteristic.Name, name);
+      }
+    }
+  }
+
   async discoverDevices() {
     const accessoriesToRemoveUUID = this.accessories.map(accessory => accessory.UUID);
 
@@ -226,9 +250,11 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
         this.accessories.push(accessory);
       }
 
+      const deviceAccessory = this.accessories.find(accessory => accessory.UUID === uuid) as PlatformAccessory;
       if (['DISHWASHER', 'OVEN'].includes(device.type)) {
-        this.bundleServices(this.accessories.find(accessory => accessory.UUID === uuid) as PlatformAccessory);
+        this.bundleServices(deviceAccessory);
       }
+      this.prefixServiceNames(deviceAccessory, device.name);
 
       this.events.on(device.id, lgThinQDevice.update.bind(lgThinQDevice));
 

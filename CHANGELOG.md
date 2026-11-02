@@ -1,5 +1,12 @@
 # Change Log
 
+## v2.2.0
+
+* Washer/dryer logic moved into pure, unit-tested functions (`src/devices/washerDryerLogic.ts`); the accessory class only wires them to HomeKit.
+* "Program Finished" fires once per program: no repeat alert when LG repeats an end message, no false alert when a program is paused, and correct behavior across restarts (a restart mid-program still reports the finish; a restart after it does not).
+* A missing `state` in LG's status is treated as off; it was treated as running.
+* Washers/dryers that LG reports offline still show as off, and now also raise the HomeKit fault flag.
+
 ## v2.1.0
 
 * Requires Homebridge 2 and Node.js 22.12+ (same as Homebridge core).

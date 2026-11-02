@@ -55,7 +55,7 @@ export default class Refrigerator extends baseDevice {
     }
 
     this.serviceExpressMode = accessory.getService('Express Freezer');
-    if (this.config.ref_express_freezer && 'expressMode' in device.snapshot?.refState) {
+    if (this.config.ref_express_freezer && 'expressMode' in (device.snapshot?.refState ?? {})) {
       if (!this.serviceExpressMode) {
         this.serviceExpressMode = accessory.addService(Switch, 'Express Freezer', 'Express Freezer');
         this.serviceExpressMode.addOptionalCharacteristic(Characteristic.ConfiguredName);
@@ -69,7 +69,7 @@ export default class Refrigerator extends baseDevice {
     }
 
     this.serviceExpressFridge = accessory.getService('Express Fridge');
-    if (this.config.ref_express_fridge && 'expressFridge' in device.snapshot?.refState) {
+    if (this.config.ref_express_fridge && 'expressFridge' in (device.snapshot?.refState ?? {})) {
       if (!this.serviceExpressFridge) {
         this.serviceExpressFridge = accessory.addService(Switch, 'Express Fridge', 'Express Fridge');
         this.serviceExpressFridge.addOptionalCharacteristic(Characteristic.ConfiguredName);
@@ -83,7 +83,7 @@ export default class Refrigerator extends baseDevice {
     }
 
     this.serviceEcoFriendly = accessory.getService('Eco Friendly');
-    if (this.config.ref_eco_friendly && 'ecoFriendly' in device.snapshot?.refState) {
+    if (this.config.ref_eco_friendly && 'ecoFriendly' in (device.snapshot?.refState ?? {})) {
       if (!this.serviceEcoFriendly) {
         this.serviceEcoFriendly = accessory.addService(Switch, 'Eco Friendly', 'Eco Friendly');
         this.serviceEcoFriendly.addOptionalCharacteristic(Characteristic.ConfiguredName);
@@ -156,15 +156,15 @@ export default class Refrigerator extends baseDevice {
       this.serviceDoorOpened.updateCharacteristic(Characteristic.ContactSensorState, contactSensorValue);
     }
 
-    if (this.config.ref_express_freezer && 'expressMode' in device.snapshot?.refState && this.serviceExpressMode) {
+    if (this.config.ref_express_freezer && 'expressMode' in (device.snapshot?.refState ?? {}) && this.serviceExpressMode) {
       this.serviceExpressMode.updateCharacteristic(Characteristic.On, this.Status.isExpressModeOn);
     }
 
-    if (this.config.ref_express_fridge && 'expressFridge' in device.snapshot?.refState && this.serviceExpressFridge) {
+    if (this.config.ref_express_fridge && 'expressFridge' in (device.snapshot?.refState ?? {}) && this.serviceExpressFridge) {
       this.serviceExpressFridge.updateCharacteristic(Characteristic.On, this.Status.isExpressFridgeOn);
     }
 
-    if (this.config.ref_eco_friendly && 'ecoFriendly' in device.snapshot?.refState && this.serviceEcoFriendly) {
+    if (this.config.ref_eco_friendly && 'ecoFriendly' in (device.snapshot?.refState ?? {}) && this.serviceEcoFriendly) {
       this.serviceEcoFriendly.updateCharacteristic(Characteristic.On, this.Status.isEcoFriendlyOn);
     }
 

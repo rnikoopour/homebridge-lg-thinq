@@ -431,7 +431,7 @@ export default class Oven extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'CONVECTION_BAKE';
+          this.ovenCommandList.ovenMode = 'CONVECTION_BAKE';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -446,7 +446,7 @@ export default class Oven extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'CONVECTION_ROST';
+          this.ovenCommandList.ovenMode = 'CONVECTION_ROST';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -461,7 +461,7 @@ export default class Oven extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'FROZEN_MEAL';
+          this.ovenCommandList.ovenMode = 'FROZEN_MEAL';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -475,7 +475,7 @@ export default class Oven extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'AIR_FRY';
+          this.ovenCommandList.ovenMode = 'AIR_FRY';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -489,7 +489,7 @@ export default class Oven extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'AIR_SOUSVIDE';
+          this.ovenCommandList.ovenMode = 'AIR_SOUSVIDE';
         }
         this.updateOvenModeSwitch();
         callback(null);
@@ -504,7 +504,7 @@ export default class Oven extends baseDevice {
       })
       .on('set', (value, callback) => {
         if (value === true) {
-          this.ovenCommandList.ovenMode == 'WARM';
+          this.ovenCommandList.ovenMode = 'WARM';
         }
         this.updateOvenModeSwitch();
         callback(null);

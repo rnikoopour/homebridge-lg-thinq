@@ -3,7 +3,7 @@ import {API} from './API';
 import {LGThinQHomebridgePlatform} from '../platform';
 import {Device} from './Device';
 import {DeviceType, PlatformType} from './constants';
-import * as uuid from 'uuid';
+import { randomUUID } from 'node:crypto';
 import * as Path from 'path';
 import * as forge from 'node-forge';
 import {DeviceModel} from './DeviceModel';
@@ -14,7 +14,7 @@ import {device as awsIotDevice} from 'aws-iot-device-sdk';
 import {URL} from 'url';
 import Persist from './Persist';
 
-export type WorkId = typeof uuid['v4'];
+export type WorkId = ReturnType<typeof randomUUID>;
 
 export class ThinQ {
   protected api: API;
@@ -89,7 +89,7 @@ export class ThinQ {
   }
 
   protected async registerWorkId(device) {
-    return this.workIds[device.id] = await this.api.sendMonitorCommand(device.id, 'Start', uuid.v4()).then(data => {
+    return this.workIds[device.id] = await this.api.sendMonitorCommand(device.id, 'Start', randomUUID()).then(data => {
       if (data !== undefined && 'workId' in data) {
         return data.workId;
       }

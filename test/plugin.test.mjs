@@ -242,3 +242,34 @@ test('oven: sub-services carry the oven name and a ConfiguredName', async () => 
     assert.equal(service.getCharacteristic(Characteristic.ConfiguredName).value, nameOf(service));
   }
 });
+
+test('washer: a live cycle triggers Program Finished once, resets after 10 minutes, offline shows a fault', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { platform, calls } = makePlatform([{ id: WASHER_ID, name: 'Washer', washer_trigger: true }]);
+  stubThinQ(platform, [sampleWasher({ state: 'POWEROFF' })]);
+  await platform.discoverDevices();
+
+  const accessory = calls.registered[0];
+  const sensor = accessory.getService(Service.OccupancySensor);
+  const valve = accessory.getService(Service.Valve);
+  const occupied = () => sensor.getCharacteristic(Characteristic.OccupancyDetected).value;
+  const updates = [];
+  sensor.getCharacteristic(Characteristic.OccupancyDetected).on('change', ({ newValue }) => updates.push(newValue));
+  const send = (washerDryer) => platform.events.emit(WASHER_ID, { washerDryer });
+
+  send({ state: 'RUNNING', remainTimeHour: 0, remainTimeMinute: 40 });
+  assert.equal(valve.getCharacteristic(Characteristic.InUse).value, Characteristic.InUse.IN_USE);
+  send({ remainTimeMinute: 39 }); // partial update keeps the state
+  assert.equal(valve.getCharacteristic(Characteristic.InUse).value, Characteristic.InUse.IN_USE);
+  send({ state: 'END', remainTimeMinute: 0 });
+  assert.equal(occupied(), Characteristic.OccupancyDetected.OCCUPANCY_DETECTED);
+  send({ state: 'END' }); // LG repeats itself
+  assert.equal(updates.filter(v => v === Characteristic.OccupancyDetected.OCCUPANCY_DETECTED).length, 1, 'fired once');
+
+  t.mock.timers.tick(10 * 60 * 1000);
+  assert.equal(occupied(), Characteristic.OccupancyDetected.OCCUPANCY_NOT_DETECTED, 'reset after 10 minutes');
+
+  platform.events.emit(WASHER_ID, { online: false, washerDryer: { state: 'POWEROFF' } });
+  assert.equal(valve.getCharacteristic(Characteristic.StatusFault).value, Characteristic.StatusFault.GENERAL_FAULT);
+  assert.equal(valve.getCharacteristic(Characteristic.Active).value, Characteristic.Active.INACTIVE);
+});

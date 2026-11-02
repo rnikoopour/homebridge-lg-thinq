@@ -508,7 +508,7 @@ export default class Oven extends baseDevice {
       accessory.addService(this.platform.Service.Switch, 'Monitor Only Mode', 'CataNicoGaTa-Control7');
     this.monitorOnlySwitch.getCharacteristic(this.platform.Characteristic.On)
       .onGet(() => {
-        if (this.Status.data?.upperRemoteStart.includes('DIS')) {
+        if (this.Status.data?.upperRemoteStart?.includes('DIS')) {
           this.monitorOnly = true;
         }
         const currentValue = this.monitorOnly;
@@ -558,7 +558,7 @@ export default class Oven extends baseDevice {
     ////////Door sensor
     this.ovenDoorOpened = this.accessory.getService('Oven Door') || this.accessory.addService(this.platform.Service.ContactSensor, 'Oven Door', 'NicoCataGaTa-OvenTCBCS');
     this.ovenDoorOpened.setCharacteristic(this.platform.Characteristic.StatusActive, this.onStatus());
-    this.ovenDoorOpened.setCharacteristic(this.platform.Characteristic.ContactSensorState, this.Status.data?.upperDoorOpen.includes('DIS') ? 0 : 1);
+    this.ovenDoorOpened.setCharacteristic(this.platform.Characteristic.ContactSensorState, this.Status.data?.upperDoorOpen?.includes('DIS') ? 0 : 1);
 
     ///Range Cooking
     this.rangeOn = this.accessory.getService('Range is Cooking') || this.accessory.addService(this.platform.Service.MotionSensor, 'Range is Cooking', 'NicoCataGaTa-OvenTCBCSMotion');
@@ -568,7 +568,7 @@ export default class Oven extends baseDevice {
     ////Remote Enabled
     this.remoteEnabled = this.accessory.getService('Remote Control Enabled') || this.accessory.addService(this.platform.Service.ContactSensor, 'Remote Control Enabled', 'NicoCataGaTa-OvenTCRCS');
     this.remoteEnabled.setCharacteristic(this.platform.Characteristic.StatusActive, this.onStatus());
-    this.remoteEnabled.setCharacteristic(this.platform.Characteristic.ContactSensorState, this.Status.data?.upperRemoteStart.includes('DIS') ? 0 : 1);
+    this.remoteEnabled.setCharacteristic(this.platform.Characteristic.ContactSensorState, this.Status.data?.upperRemoteStart?.includes('DIS') ? 0 : 1);
     /////////Burners On
 
     this.burnersOnNumber = this.accessory.getService('Number of Burners in Use') ||
@@ -888,7 +888,7 @@ export default class Oven extends baseDevice {
   }
 
   getMonitorState() {
-    if (this.Status.data?.upperRemoteStart.includes('DIS')) {
+    if (this.Status.data?.upperRemoteStart?.includes('DIS')) {
       this.monitorOnly = true;
     } else {
       this.monitorOnly = this.homekitMonitorOnly as boolean;
@@ -911,11 +911,11 @@ export default class Oven extends baseDevice {
   }
 
   ovenOnStatus() {
-    return !this.Status.data?.upperState.includes('INITIAL');
+    return !this.Status.data?.upperState?.includes('INITIAL');
   }
 
   onStatus() {
-    return !this.Status.data?.upperState.includes('INITIAL') || this.Status.data?.burnerOnCounter > 0;
+    return !this.Status.data?.upperState?.includes('INITIAL') || this.Status.data?.burnerOnCounter > 0;
   }
 
   nameLengthCheck(newName) {
@@ -1020,7 +1020,7 @@ export default class Oven extends baseDevice {
     }
 
     if ('upperCookAndWarmStatus' in this.Status.data) {
-      if (!this.Status.data?.upperCookAndWarmStatus.includes('DIS')) {
+      if (!this.Status.data?.upperCookAndWarmStatus?.includes('DIS')) {
         this.inputNameMode += ' (Keep Warm On)';
       }
     }
@@ -1032,7 +1032,7 @@ export default class Oven extends baseDevice {
     switch (this.Status.data?.upperState) {
       case 'INITIAL':
         this.inputNameStatus += 'in Standby';
-        if (this.Status.data?.upperRemoteStart.includes('DIS')) {
+        if (this.Status.data?.upperRemoteStart?.includes('DIS')) {
           this.inputNameStatus += ' (Remote Start Disabled)';
         } else if (this.homekitMonitorOnly) {
           this.inputNameStatus += ' (Homekit Monitor Only Mode)';
@@ -1069,7 +1069,7 @@ export default class Oven extends baseDevice {
     }
 
     if ('commonControlLock' in this.Status.data) {
-      if (!this.Status.data?.commonControlLock.includes('DIS')) {
+      if (!this.Status.data?.commonControlLock?.includes('DIS')) {
         this.inputNameStatus += ' - Controls Locked';
       }
     }
@@ -1272,7 +1272,7 @@ export default class Oven extends baseDevice {
     } else {
       this.inputNameOptions += 'Temp in °C';
     }
-    if (!this.Status.data?.upperSabbath.includes('DIS')) {
+    if (!this.Status.data?.upperSabbath?.includes('DIS')) {
       this.inputNameOptions += ', Sabbath On';
     }
     if (this.Status.data?.settingConvAutoConversion?.includes('ENA')) {
@@ -1340,7 +1340,7 @@ export default class Oven extends baseDevice {
   }
 
   targetHeatingState() {
-    // if (this.Status.data?.upperState.includes('INITIAL') || this.Status.data?.upperState.includes('DONE') || this.Status.data?.upperState.includes('COOLING')) {
+    // if (this.Status.data?.upperState?.includes('INITIAL') || this.Status.data?.upperState?.includes('DONE') || this.Status.data?.upperState?.includes('COOLING')) {
     if (this.Status.data?.upperTargetTemperatureValue == 0) {
 
       return 0;
@@ -1547,7 +1547,7 @@ export default class Oven extends baseDevice {
   }
 
   ovenServiceActive() {
-    if (!this.Status.data?.upperState.includes('INITIAL') || this.Status.data?.burnerOnCounter != 0) {
+    if (!this.Status.data?.upperState?.includes('INITIAL') || this.Status.data?.burnerOnCounter != 0) {
       return 1;
     } else {
       return 0;
@@ -1595,7 +1595,7 @@ export default class Oven extends baseDevice {
       }
 
       ///// how to handle the time Here
-      if (!this.Status.data?.upperManualCookName.includes('NONE')) {
+      if (!this.Status.data?.upperManualCookName?.includes('NONE')) {
         if (this.firstStart) {
           this.courseStartString = this.ovenCookingStartTime();
         }
@@ -1772,7 +1772,7 @@ export default class Oven extends baseDevice {
       }
 
       ///Monitor Switch Status
-      if (this.Status.data?.upperRemoteStart.includes('DIS')) {
+      if (this.Status.data?.upperRemoteStart?.includes('DIS')) {
         this.monitorOnly = true;
       }
       if (this.monitorOnlySwitch.getCharacteristic(this.platform.Characteristic.On).value != this.monitorOnly) {
@@ -1781,7 +1781,7 @@ export default class Oven extends baseDevice {
       ////////Door Status
 
       this.ovenDoorOpened.updateCharacteristic(this.platform.Characteristic.StatusActive, this.onStatus());
-      this.ovenDoorOpened.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.Status.data?.upperDoorOpen.includes('DIS') ? 0 : 1);
+      this.ovenDoorOpened.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.Status.data?.upperDoorOpen?.includes('DIS') ? 0 : 1);
       ///Range Status
       if (this.rangeOn.getCharacteristic(this.platform.Characteristic.StatusActive).value != this.onStatus()) {
         this.rangeOn.updateCharacteristic(this.platform.Characteristic.StatusActive, this.onStatus());
@@ -1789,7 +1789,7 @@ export default class Oven extends baseDevice {
       }
       ////Remote Control Status
       this.remoteEnabled.updateCharacteristic(this.platform.Characteristic.StatusActive, this.onStatus());
-      this.remoteEnabled.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.Status.data?.upperRemoteStart.includes('DIS') ? 0 : 1);
+      this.remoteEnabled.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.Status.data?.upperRemoteStart?.includes('DIS') ? 0 : 1);
       /////Burners on
       this.burnersOnNumber.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel, this.Status.data?.burnerOnCounter < 1 ? 0.0001 : this.Status.data?.burnerOnCounter);
       this.burnersOnNumber.updateCharacteristic(this.platform.Characteristic.StatusActive, this.Status.data?.burnerOnCounter > 0 ? true : false);
@@ -1799,10 +1799,10 @@ export default class Oven extends baseDevice {
       this.ovenAlarmService.updateCharacteristic(Characteristic.InUse, this.ovenTimerTime() > 0 ? 1 : 0);
       if ('upperCookAndWarmStatus' in this.Status.data) {
         ////Switch State
-        this.keepWarmSwitch.updateCharacteristic(this.platform.Characteristic.On, !this.Status.data?.upperCookAndWarmStatus.includes('DIS'));
+        this.keepWarmSwitch.updateCharacteristic(this.platform.Characteristic.On, !this.Status.data?.upperCookAndWarmStatus?.includes('DIS'));
 
         //////////Warm Status
-        if (!this.Status.data?.upperCookAndWarmStatus.includes('DIS')) {
+        if (!this.Status.data?.upperCookAndWarmStatus?.includes('DIS')) {
           this.ovenCommandList.ovenKeepWarm = 'ENABLE';
         } else {
           this.ovenCommandList.ovenKeepWarm = 'DISABLE';

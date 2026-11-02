@@ -273,3 +273,35 @@ test('washer: a live cycle triggers Program Finished once, resets after 10 minut
   assert.equal(valve.getCharacteristic(Characteristic.StatusFault).value, Characteristic.StatusFault.GENERAL_FAULT);
   assert.equal(valve.getCharacteristic(Characteristic.Active).value, Characteristic.Active.INACTIVE);
 });
+
+test('dishwasher: a live program triggers Program Finished once; stopping mid-program does not', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const DISHWASHER_ID = hap.uuid.generate('dishwasher-2');
+  const data = structuredClone(sample('dishwasher.json').data);
+  data.deviceId = DISHWASHER_ID;
+  data.snapshot.dishwasher.state = 'POWEROFF';
+  const device = new Device(data);
+  device.deviceModel = new DeviceModel(sample('dishwasher-model.json'));
+  const { platform, calls } = makePlatform([{ id: DISHWASHER_ID, name: 'Dishwasher', dishwasher_trigger: true }]);
+  stubThinQ(platform, [device]);
+  await platform.discoverDevices();
+
+  const sensor = calls.registered[0].getService(Service.OccupancySensor);
+  const fired = [];
+  sensor.getCharacteristic(Characteristic.OccupancyDetected).on('change', ({ newValue }) => {
+    if (newValue === Characteristic.OccupancyDetected.OCCUPANCY_DETECTED) {
+      fired.push(true);
+    }
+  });
+  const send = (dishwasher) => platform.events.emit(DISHWASHER_ID, { dishwasher });
+
+  send({ state: 'RUNNING', process: 'WASHING', remainTimeHour: 1, remainTimeMinute: 30 });
+  send({ state: 'POWEROFF' }); // stopped mid-program
+  assert.equal(fired.length, 0, 'stop is not a finish');
+
+  send({ state: 'RUNNING', process: 'WASHING', remainTimeHour: 1, remainTimeMinute: 30 });
+  send({ process: 'DRYING', remainTimeHour: 0, remainTimeMinute: 10 });
+  send({ state: 'END' });
+  send({ state: 'END' });
+  assert.equal(fired.length, 1, 'finished once');
+});

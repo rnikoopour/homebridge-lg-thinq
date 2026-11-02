@@ -3,9 +3,16 @@ import {LGThinQHomebridgePlatform} from '../platform';
 import {PlatformAccessory} from 'homebridge';
 import {Device} from '../lib/Device';
 import {WasherDryerStatus} from './WasherDryer';
+import {ProgramTracker} from './programTracking';
+import {DEFAULT_DISHWASHER_STATE_VALUES, DishwasherStateValues, initialDishwasherTracker, nextDishwasherStep} from './dishwasherLogic';
+
+/** How long "Program Finished" stays triggered before resetting. */
+const FINISHED_RESET_MS = 10 * 60 * 1000;
 
 export default class Dishwasher extends baseDevice {
-  public isRunning = false;
+  /** Program Finished tracking; see dishwasherLogic. */
+  protected tracker: ProgramTracker;
+  protected finishedResetTimer?: ReturnType<typeof setTimeout>;
   public inputID = 1;
   public rinseLevel = 'LEVEL_2';
   public inputName = 'Dishwasher Status';
@@ -210,6 +217,20 @@ export default class Dishwasher extends baseDevice {
     } else if (this.serviceEventFinished) {
       accessory.removeService(this.serviceEventFinished);
     }
+
+    // A restart mid-program must still report the finish; a restart after it must not.
+    this.tracker = initialDishwasherTracker(this.Status.data, this.stateValues);
+  }
+
+  /** This model's values for the running/paused/completed states. */
+  protected get stateValues(): DishwasherStateValues {
+    const model = this.accessory.context.device.deviceModel;
+    const lookup = (label: string, fallback: string) => model?.lookupMonitorName('state', label) ?? fallback;
+    return {
+      running: lookup('@DW_STATE_RUNNING_W', DEFAULT_DISHWASHER_STATE_VALUES.running),
+      paused: lookup('@DW_STATE_PAUSE_W', DEFAULT_DISHWASHER_STATE_VALUES.paused),
+      completed: lookup('@DW_STATE_COMPLETE_W', DEFAULT_DISHWASHER_STATE_VALUES.completed),
+    };
   }
 
   currentInputName() {
@@ -738,29 +759,21 @@ export default class Dishwasher extends baseDevice {
       return;
     }
 
-    // when washer state is changed
-    if (this.config.dishwasher_trigger as boolean && this.serviceEventFinished && 'state' in dishwasher) {
-      const {
-        Characteristic: {
-          OccupancyDetected,
-        },
-      } = this.platform;
+    if (this.config.dishwasher_trigger as boolean && this.serviceEventFinished) {
+      const {Characteristic: {OccupancyDetected}} = this.platform;
+      const step = nextDishwasherStep(this.tracker, this.Status.data, this.stateValues);
+      this.tracker = step.tracker;
 
-      // detect if washer program in done
-      if ((['END'].includes(dishwasher.state)) || (this.isRunning && !this.Status.isRunning)) {
+      if (step.finished) {
         this.serviceEventFinished.updateCharacteristic(OccupancyDetected, OccupancyDetected.OCCUPANCY_DETECTED);
-        this.isRunning = false; // marked device as not running
-
-        // turn it off after 10 minute
-        setTimeout(() => {
+        clearTimeout(this.finishedResetTimer);
+        this.finishedResetTimer = setTimeout(() => {
           this.serviceEventFinished.updateCharacteristic(OccupancyDetected, OccupancyDetected.OCCUPANCY_NOT_DETECTED);
-        }, 10000 * 60);
+        }, FINISHED_RESET_MS);
       }
-
-      // detect if dishwasher program is start
-      if (this.Status.isRunning && !this.isRunning) {
+      if (step.started) {
+        clearTimeout(this.finishedResetTimer);
         this.serviceEventFinished.updateCharacteristic(OccupancyDetected, OccupancyDetected.OCCUPANCY_NOT_DETECTED);
-        this.isRunning = true;
       }
     }
   }

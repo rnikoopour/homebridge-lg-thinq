@@ -371,24 +371,22 @@ test('oven: remote start disabled on the oven blocks commands even with Monitor 
   assert.equal(await on('Monitor Only Mode').handleGetRequest(), true, 'shows as monitor only');
 });
 
-test('burners: a separate Burners accessory with exactly one switch per burner; the oven no longer has range parts', async (t) => {
+test('burners: a separate Burners accessory with a single read-only switch; the oven no longer has range parts', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
-  const { accessory: oven, burners } = await buildOven('bakingState'); // fixture: front left burner on
+  const { accessory: oven, burners } = await buildOven('bakingState'); // fixture: a burner is on
   assert.ok(burners, 'Burners accessory registered');
   assert.equal(burners.displayName, 'Burners');
   assert.equal(oven.services.filter(s => ['Range is Cooking', 'Number of Burners in Use'].includes(s.displayName)).length, 0);
 
   const switches = burners.services.filter(s => s.UUID === Service.Switch.UUID);
-  assert.deepEqual(switches.map(nameOf).sort(),
-    ['Burners Back Left', 'Burners Back Right', 'Burners Center', 'Burners Front Left', 'Burners Front Right'], 'five burners, no extra switch');
+  assert.equal(switches.length, 1, 'one switch: LG does not report which physical burner is on');
+  const on = switches[0].getCharacteristic(Characteristic.On);
+  assert.equal(nameOf(switches[0]), 'Burners');
+  assert.equal(await on.handleGetRequest(), true);
 
-  const on = (name) => switches.find(s => nameOf(s) === name).getCharacteristic(Characteristic.On);
-  assert.equal(await on('Burners Front Left').handleGetRequest(), true);
-  assert.equal(await on('Burners Center').handleGetRequest(), false);
-
-  await on('Burners Front Left').handleSetRequest(false); // read only: a tap reverts
+  await on.handleSetRequest(false); // read only: a tap reverts
   t.mock.timers.tick(500);
-  assert.equal(on('Burners Front Left').value, true);
+  assert.equal(on.value, true);
 });
 
 test('burners: the config can rename the Burners accessory', async () => {

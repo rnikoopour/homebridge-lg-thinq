@@ -3,44 +3,40 @@ import {LGThinQHomebridgePlatform} from '../platform';
 import {PlatformAccessory} from 'homebridge';
 import {rangeView} from './rangeLogic';
 
-/** Taps on the read-only switches are reverted after this long. */
+/** Taps on the read-only switch are reverted after this long. */
 const REVERT_MS = 500;
 
 /**
- * The cooktop burners of an LG range, published as their own "Burners" accessory next
- * to the oven: one switch per burner (the Home app groups them and shows how many are
- * on). LG does not allow controlling burners remotely, so the switches are read-only
- * (taps revert).
+ * The cooktop of an LG range, published as its own "Burners" accessory next to the
+ * oven: one switch that is on while any burner is on. LG does not report which
+ * physical burner is on (see rangeLogic), and does not allow controlling burners
+ * remotely, so the switch is read-only (taps revert).
  */
 export default class Range extends baseDevice {
-  protected burnerSwitches = new Map<number, ReturnType<PlatformAccessory['addService']>>();
+  protected burnersSwitch;
 
   constructor(
     public readonly platform: LGThinQHomebridgePlatform,
     public readonly accessory: PlatformAccessory,
   ) {
     super(platform, accessory);
-    const {Service: {Switch}} = this.platform;
+    const {Service: {Switch}, Characteristic} = this.platform;
 
-    // An earlier test build published an extra "any burner on" switch.
-    const anyBurner = this.accessory.getServiceById(Switch, 'burners');
-    if (anyBurner) {
-      this.accessory.removeService(anyBurner);
+    // Earlier test builds published one switch per LG cooktop slot (and an "any burner" switch).
+    for (const service of [...this.accessory.services]) {
+      if (service.UUID === Switch.UUID && service.subtype !== 'burners-any') {
+        this.accessory.removeService(service);
+      }
     }
 
-    for (const burner of this.view.burners) {
-      const service = this.accessory.getService(burner.name) || this.accessory.addService(Switch, burner.name, `burner${burner.index}`);
-      this.readOnly(service, () => this.view.burners.find(b => b.index === burner.index)?.on ?? false);
-      this.burnerSwitches.set(burner.index, service);
-    }
-  }
-
-  protected readOnly(service, value: () => boolean) {
-    const {Characteristic} = this.platform;
-    service.getCharacteristic(Characteristic.On)
-      .onGet(value)
+    this.burnersSwitch = this.accessory.getServiceById(Switch, 'burners-any')
+      || this.accessory.addService(Switch, this.accessory.displayName, 'burners-any');
+    this.burnersSwitch.setPrimaryService(true);
+    this.burnersSwitch.setCharacteristic(Characteristic.Name, this.accessory.displayName);
+    this.burnersSwitch.getCharacteristic(Characteristic.On)
+      .onGet(() => this.view.on)
       .onSet(() => {
-        setTimeout(() => service.updateCharacteristic(Characteristic.On, value()), REVERT_MS);
+        setTimeout(() => this.burnersSwitch.updateCharacteristic(Characteristic.On, this.view.on), REVERT_MS);
       });
   }
 
@@ -50,13 +46,9 @@ export default class Range extends baseDevice {
 
   updateAccessoryCharacteristic(device) {
     super.updateAccessoryCharacteristic(device);
-    if (!this.burnerSwitches) {
+    if (!this.burnersSwitch) {
       return;
     }
-    const {Characteristic} = this.platform;
-    const view = this.view;
-    for (const burner of view.burners) {
-      this.burnerSwitches.get(burner.index)?.updateCharacteristic(Characteristic.On, burner.on);
-    }
+    this.burnersSwitch.updateCharacteristic(this.platform.Characteristic.On, this.view.on);
   }
 }

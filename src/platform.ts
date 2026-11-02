@@ -110,6 +110,26 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     return device.id;
   }
 
+  /**
+   * Link every published service to the accessory's primary service so the Home
+   * app shows the appliance as one tile with its parts bundled inside.
+   */
+  private bundleServices(accessory: PlatformAccessory) {
+    const primary = accessory.services.find(service => service.isPrimaryService);
+    if (!primary) {
+      return;
+    }
+
+    for (const service of accessory.services) {
+      if (service === primary || service.UUID === this.api.hap.Service.AccessoryInformation.UUID) {
+        continue;
+      }
+      if (!primary.linkedServices.includes(service)) {
+        primary.addLinkedService(service);
+      }
+    }
+  }
+
   async discoverDevices() {
     const accessoriesToRemoveUUID = this.accessories.map(accessory => accessory.UUID);
 
@@ -204,6 +224,10 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 
         this.accessories.push(accessory);
+      }
+
+      if (['DISHWASHER', 'OVEN'].includes(device.type)) {
+        this.bundleServices(this.accessories.find(accessory => accessory.UUID === uuid) as PlatformAccessory);
       }
 
       this.events.on(device.id, lgThinQDevice.update.bind(lgThinQDevice));

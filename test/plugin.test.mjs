@@ -13,6 +13,7 @@ const { LGThinQHomebridgePlatform } = require('../dist/platform.js');
 const { Device } = require('../dist/lib/Device.js');
 const { DeviceModel } = require('../dist/lib/DeviceModel.js');
 const { mergeDeep } = require('../dist/helper.js');
+const { accessoryPlans } = require('../dist/platformLogic.js');
 
 // LG device ids are UUIDs, and HAP requires accessory UUIDs to be valid.
 const WASHER_ID = hap.uuid.generate('washer-1');
@@ -110,7 +111,10 @@ test('names come from the Homebridge config and prefix every sub-service', async
 
 test('former TV devices get a stable no-tv UUID; others use the LG device id', () => {
   const { platform } = makePlatform([]);
-  const uuidFor = (deviceType) => platform['accessoryUUID'](new Device({ deviceId: ABC_ID, deviceType }));
+  const uuidFor = (deviceType) => {
+    const device = new Device({ deviceId: ABC_ID, deviceType });
+    return platform['uuidFor'](device, accessoryPlans(device, 'Name', [])[0]);
+  };
 
   assert.equal(uuidFor(204), hap.uuid.generate(ABC_ID + ':no-tv')); // DISHWASHER
   assert.equal(uuidFor(301), hap.uuid.generate(ABC_ID + ':no-tv')); // OVEN

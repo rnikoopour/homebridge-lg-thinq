@@ -164,3 +164,81 @@ test('every value the dishwasher publishes can be read (modern onGet handlers)',
   }
   assert.ok(reads > 10, `read ${reads} values`);
 });
+
+const ovenFixture = () => JSON.parse(fs.readFileSync(new URL('./fixtures/oven.json', import.meta.url), 'utf8'));
+
+async function buildOven(ovenState) {
+  const OVEN_ID = hap.uuid.generate('oven-1');
+  const fixture = ovenFixture();
+  const data = { ...fixture.device, deviceId: OVEN_ID };
+  if (ovenState) {
+    data.snapshot = { ...data.snapshot, ovenState: fixture[ovenState] };
+  }
+  const device = new Device(data);
+  device.deviceModel = new DeviceModel(fixture.model);
+  const { platform, calls } = makePlatform([{ id: OVEN_ID, name: 'Oven' }]);
+  stubThinQ(platform, [device]);
+  await platform.discoverDevices();
+  return { accessory: calls.registered[0], OVEN_ID };
+}
+
+async function readAll(accessory) {
+  let reads = 0;
+  for (const service of accessory.services) {
+    for (const characteristic of service.characteristics) {
+      if (characteristic.props.perms.includes('pr')) {
+        await characteristic.handleGetRequest();
+        reads++;
+      }
+    }
+  }
+  return reads;
+}
+
+test('oven: thermostat main tile, no TV, every value readable while off and while baking', async () => {
+  for (const state of [null, 'bakingState']) {
+    const { accessory, OVEN_ID } = await buildOven(state);
+    assert.equal(accessory.UUID, hap.uuid.generate(OVEN_ID + ':no-tv'));
+    assert.equal(accessory.services.filter(s => s.UUID === Service.Television.UUID).length, 0, 'no Television service');
+    assert.equal(accessory.services.filter(s => s.UUID === Service.Valve.UUID).length, 0, 'timer valves not published');
+    const primary = accessory.services.find(s => s.isPrimaryService);
+    assert.equal(primary.UUID, Service.Thermostat.UUID);
+    assert.ok(await readAll(accessory) > 30, `${state ?? 'off'}: values readable`);
+  }
+});
+
+// HAP clamps out-of-range values itself and only warns, so check for the warning.
+async function captureHapWarnings(fn) {
+  const warnings = [];
+  const originals = { warn: console.warn, log: console.log, error: console.error };
+  for (const level of Object.keys(originals)) {
+    console[level] = (...args) => warnings.push(args.map(String).join(' '));
+  }
+  try {
+    await fn();
+  } finally {
+    Object.assign(console, originals);
+  }
+  return warnings.filter(w => /illegal value/i.test(w));
+}
+
+test('oven: target temperature stays within the declared range when LG reports less', async () => {
+  const { accessory } = await buildOven(null); // fixture reports a target of 10 while off
+  const illegal = await captureHapWarnings(async () => {
+    for (const service of accessory.services.filter(s => s.UUID === Service.Thermostat.UUID)) {
+      await service.getCharacteristic(Characteristic.TargetTemperature).handleGetRequest();
+    }
+  });
+  assert.deepEqual(illegal, []);
+});
+
+test('oven: sub-services carry the oven name and a ConfiguredName', async () => {
+  const { accessory } = await buildOven('bakingState');
+  for (const service of accessory.services) {
+    if (service.isPrimaryService || service.UUID === Service.AccessoryInformation.UUID) {
+      continue;
+    }
+    assert.match(String(nameOf(service)), /^Oven\b/);
+    assert.equal(service.getCharacteristic(Characteristic.ConfiguredName).value, nameOf(service));
+  }
+});

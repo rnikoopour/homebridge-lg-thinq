@@ -371,7 +371,7 @@ test('oven: remote start disabled on the oven blocks commands even with Monitor 
   assert.equal(await on('Monitor Only Mode').handleGetRequest(), true, 'shows as monitor only');
 });
 
-test('burners: a separate Burners accessory, bundled and named per burner; the oven no longer has range parts', async (t) => {
+test('burners: a separate Burners accessory with exactly one switch per burner; the oven no longer has range parts', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const { accessory: oven, burners } = await buildOven('bakingState'); // fixture: front left burner on
   assert.ok(burners, 'Burners accessory registered');
@@ -379,20 +379,16 @@ test('burners: a separate Burners accessory, bundled and named per burner; the o
   assert.equal(oven.services.filter(s => ['Range is Cooking', 'Number of Burners in Use'].includes(s.displayName)).length, 0);
 
   const switches = burners.services.filter(s => s.UUID === Service.Switch.UUID);
-  const main = switches.find(s => s.isPrimaryService);
-  assert.equal(nameOf(main), 'Burners');
-  assert.deepEqual(switches.filter(s => !s.isPrimaryService).map(nameOf).sort(),
-    ['Burners Back Left', 'Burners Back Right', 'Burners Center', 'Burners Front Left', 'Burners Front Right']);
-  assert.equal(main.linkedServices.length, 5, 'burners bundled under the main switch');
+  assert.deepEqual(switches.map(nameOf).sort(),
+    ['Burners Back Left', 'Burners Back Right', 'Burners Center', 'Burners Front Left', 'Burners Front Right'], 'five burners, no extra switch');
 
-  const frontLeft = switches.find(s => nameOf(s) === 'Burners Front Left').getCharacteristic(Characteristic.On);
-  assert.equal(await main.getCharacteristic(Characteristic.On).handleGetRequest(), true);
-  assert.equal(await frontLeft.handleGetRequest(), true);
-  assert.equal(await switches.find(s => nameOf(s) === 'Burners Center').getCharacteristic(Characteristic.On).handleGetRequest(), false);
+  const on = (name) => switches.find(s => nameOf(s) === name).getCharacteristic(Characteristic.On);
+  assert.equal(await on('Burners Front Left').handleGetRequest(), true);
+  assert.equal(await on('Burners Center').handleGetRequest(), false);
 
-  await frontLeft.handleSetRequest(false); // read only: a tap reverts
+  await on('Burners Front Left').handleSetRequest(false); // read only: a tap reverts
   t.mock.timers.tick(500);
-  assert.equal(frontLeft.value, true);
+  assert.equal(on('Burners Front Left').value, true);
 });
 
 test('burners: the config can rename the Burners accessory', async () => {

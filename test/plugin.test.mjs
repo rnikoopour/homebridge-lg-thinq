@@ -137,3 +137,30 @@ test('a powered-off washer that LG reports offline shows as off, not an error', 
   const inUse = await valve.getCharacteristic(Characteristic.InUse).handleGetRequest();
   assert.equal(inUse, Characteristic.InUse.NOT_IN_USE);
 });
+
+test('every value the dishwasher publishes can be read (modern onGet handlers)', async () => {
+  const DISHWASHER_ID = hap.uuid.generate('dishwasher-1');
+  const data = structuredClone(sample('dishwasher.json').data);
+  data.deviceId = DISHWASHER_ID;
+  const device = new Device(data);
+  device.deviceModel = new DeviceModel(sample('dishwasher-model.json'));
+  const { platform, calls } = makePlatform([{ id: DISHWASHER_ID, name: 'Dishwasher', dishwasher_trigger: true }]);
+  stubThinQ(platform, [device]);
+
+  await platform.discoverDevices();
+
+  const accessory = calls.registered[0];
+  assert.equal(accessory.UUID, hap.uuid.generate(DISHWASHER_ID + ':no-tv'));
+  assert.equal(accessory.services.filter(s => s.UUID === Service.Television.UUID).length, 0, 'no Television service');
+  let reads = 0;
+  for (const service of accessory.services) {
+    for (const characteristic of service.characteristics) {
+      if (!characteristic.props.perms.includes('pr')) {
+        continue;
+      }
+      await characteristic.handleGetRequest();
+      reads++;
+    }
+  }
+  assert.ok(reads > 10, `read ${reads} values`);
+});

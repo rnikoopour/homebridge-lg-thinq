@@ -82,29 +82,29 @@ export default class Microwave extends baseDevice {
     this.serviceHood.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.serviceHood.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Microwave Fan');
     this.serviceHood.getCharacteristic(Characteristic.Active)
-      .on('get', (callback) => {
+      .onGet(() => {
         let currentValue = 0;
         if (this.Status.data?.mwoVentSpeedLevel > 0) {
           currentValue = 1;
         }
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         this.ventSpeed = value as number;
         if (this.ventSpeed !== this.Status.data?.mwoVentSpeedLevel) {
           this.sendLightVentCommand();
         }
-        callback(null);
+
       });
     this.serviceHood.getCharacteristic(Characteristic.RotationSpeed)
-      .on('get', (callback) => {
+      .onGet(() => {
         this.ventSpeed = this.Status.data?.mwoVentSpeedLevel;
-        callback(null, this.ventSpeed);
+        return this.ventSpeed;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         this.ventSpeed = value as number;
         this.sendLightVentCommand();
-        callback(null);
+
       });
     this.serviceHood.getCharacteristic(Characteristic.RotationSpeed)
       .setProps({
@@ -118,7 +118,7 @@ export default class Microwave extends baseDevice {
     this.serviceLight.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.serviceLight.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Microwave Light');
     this.serviceLight.getCharacteristic(Characteristic.On)
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === false) {
           this.lampLevel = 0;
           this.sendLightVentCommand();
@@ -126,26 +126,26 @@ export default class Microwave extends baseDevice {
           this.lampLevel = 2;
           this.sendLightVentCommand();
         }
-        callback(null);
+
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         let currentValue = false;
         if (this.Status.data?.mwoLampLevel > 0) {
           currentValue = true;
         }
-        callback(null, currentValue);
+        return currentValue;
       });
     this.serviceLight.getCharacteristic(Characteristic.Brightness)
-      .on('get', (callback) => {
+      .onGet(() => {
         this.lampLevel = this.Status.data?.mwoLampLevel;
-        callback(null, this.lampLevel);
+        return this.lampLevel;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         this.lampLevel = value as number;
         if (this.lampLevel !== this.Status.data?.mwoLampLevel) {
           this.sendLightVentCommand();
         }
-        callback(null);
+
       });
     this.serviceLight.getCharacteristic(Characteristic.Brightness)
       .setProps({
@@ -159,11 +159,11 @@ export default class Microwave extends baseDevice {
     this.offSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.offSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Turn Off the Microwave');
     this.offSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value as boolean) {
           if (this.Status.data?.mwoVentSpeedLevel !== 0 || this.Status.data?.mwoLampLevel !== 0) {
             this.lampLevel = 0;
@@ -175,7 +175,7 @@ export default class Microwave extends baseDevice {
             this.offSwitch.updateCharacteristic(this.platform.Characteristic.On, false);
           }, 1000);
         }
-        callback(null);
+
       });
 
     this.microwavePower = this.accessory.getService('Microwave Power') ||
@@ -183,31 +183,31 @@ export default class Microwave extends baseDevice {
     this.microwavePower.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.microwavePower.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Microwave Power');
     this.microwavePower.getCharacteristic(this.platform.Characteristic.On)
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value == false) {
           this.mwPower = 0;
         } else {
           this.mwPower = 100;
 
         }
-        callback(null);
+
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         let currentValue = false;
         if (parseInt(this.Status.data?.LWOMGTPowerLevel) * 10 > 0) {
           currentValue = true;
         }
-        callback(null, currentValue);
+        return currentValue;
       });
 
     this.microwavePower.getCharacteristic(this.platform.Characteristic.Brightness)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = parseInt(this.Status.data?.LWOMGTPowerLevel) * 10;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         this.mwPower = value as number;
-        callback(null);
+
       });
     this.microwavePower.getCharacteristic(this.platform.Characteristic.Brightness)
       .setProps({
@@ -224,11 +224,11 @@ export default class Microwave extends baseDevice {
     this.ovenService.setCharacteristic(this.platform
       .Characteristic.SleepDiscoveryMode, this.platform.Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
     this.ovenService.getCharacteristic(this.platform.Characteristic.Active)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenServiceActive();
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === 0) {
           if (this.Status.data?.LWOState.includes('INITIAL')) {
             this.stopOven();
@@ -251,23 +251,23 @@ export default class Microwave extends baseDevice {
             this.sendLightVentCommand();
           }
         }
-        callback(null);
+
       });
     this.ovenService
       .setCharacteristic(this.platform.Characteristic.ActiveIdentifier, this.inputID);
     this.ovenService
       .getCharacteristic(this.platform.Characteristic.ActiveIdentifier)
-      .on('set', (inputIdentifier, callback) => {
+      .onSet((inputIdentifier) => {
         if (Number(inputIdentifier) > 9 || Number(inputIdentifier) < 1) {
           this.inputID = 1;
         } else {
           this.inputID = inputIdentifier as number;
         }
-        callback();
+
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.inputID;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenState = this.accessory.getService('Microwave Status') ||
       this.accessory.addService(this.platform.Service.InputSource, 'Microwave Status', 'NicoCataGaTa-Oven1003')
@@ -277,9 +277,9 @@ export default class Microwave extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.InputSourceType, this.platform.Characteristic.InputSourceType.APPLICATION)
         .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.platform.Characteristic.CurrentVisibilityState.SHOWN);
     this.ovenState.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenStatus();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenState);
     this.lightVent = this.accessory.getService('Light and Vent Status') ||
@@ -291,9 +291,9 @@ export default class Microwave extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.TargetVisibilityState, this.lightVentState() ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN)
         .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.lightVentState() ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN);
     this.lightVent.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.lightVentStatus();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.lightVent);
     this.ovenMode = this.accessory.getService('Microwave Cooking Mode') ||
@@ -305,9 +305,9 @@ export default class Microwave extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.TargetVisibilityState, this.onStatus() ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN)
         .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.onStatus() ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN);
     this.ovenMode.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenModeName();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenMode);
 
@@ -320,9 +320,9 @@ export default class Microwave extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.TargetVisibilityState, this.onStatus() ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN)
         .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.onStatus() ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN);
     this.ovenTemp.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenTemperature();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenTemp);
     this.ovenOptions = this.accessory.getService('Microwave Options') ||
@@ -334,9 +334,9 @@ export default class Microwave extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.TargetVisibilityState, this.onStatus() ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN)
         .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.onStatus() ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN);
     this.ovenOptions.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.oventOptions();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenOptions);
     this.ovenStart = this.accessory.getService('Microwave Start Time') ||
@@ -348,9 +348,9 @@ export default class Microwave extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.TargetVisibilityState, this.showTime ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN)
         .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.showTime ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN);
     this.ovenStart.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.courseStartString;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenStart);
 
@@ -363,9 +363,9 @@ export default class Microwave extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.TargetVisibilityState, this.showTimer ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN)
         .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.showTimer ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN);
     this.ovenTimer.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.courseTimerString;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenTimer);
 
@@ -378,9 +378,9 @@ export default class Microwave extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.TargetVisibilityState, this.showTime ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN)
         .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.showTime ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN);
     this.ovenTime.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.courseTimeString;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenTime);
 
@@ -393,9 +393,9 @@ export default class Microwave extends baseDevice {
         .setCharacteristic(this.platform.Characteristic.TargetVisibilityState, this.showTime ? this.platform.Characteristic.TargetVisibilityState.SHOWN : this.platform.Characteristic.TargetVisibilityState.HIDDEN)
         .setCharacteristic(this.platform.Characteristic.CurrentVisibilityState, this.showTime ? this.platform.Characteristic.CurrentVisibilityState.SHOWN : this.platform.Characteristic.CurrentVisibilityState.HIDDEN);
     this.ovenEndTime.getCharacteristic(this.platform.Characteristic.ConfiguredName)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.courseTimeEndString;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenService.addLinkedService(this.ovenEndTime);
 
@@ -408,14 +408,14 @@ export default class Microwave extends baseDevice {
     this.ovenTimerService.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Microwave Cook Time');
     this.ovenTimerService.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.IRRIGATION);
     this.ovenTimerService.getCharacteristic(Characteristic.Active)
-      .on('get', (callback) => {
+      .onGet(() => {
         let currentValue = 0;
         if (this.remainTime() != 0) {
           currentValue = 1;
         }
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value == 0) {
           this.stopOven();
           this.ovenTimerService.updateCharacteristic(Characteristic.Active, 0);
@@ -424,31 +424,31 @@ export default class Microwave extends baseDevice {
         } else {
           this.sendOvenCommand();
         }
-        callback(null);
+
       });
     this.ovenTimerService.setCharacteristic(Characteristic.InUse, this.remainTime() > 0 ? Characteristic.InUse.IN_USE : Characteristic.InUse.NOT_IN_USE);
     this.ovenTimerService.getCharacteristic(Characteristic.RemainingDuration)
       .setProps({
         maxValue: 32400, // 9hours
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.remainTime();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenTimerService.getCharacteristic(this.platform.Characteristic.SetDuration)
       .setProps({
         maxValue: 32400, // 9hours
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.oventTargetTime();
 
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         this.pauseUpdate = true;
         this.platform.log.debug('Cooking Duration set to to: ' + this.secondsToTime(value));
         this.ovenCommandList.ovenSetDuration = value as number;
-        callback(null);
+
       });
     this.ovenAlarmService = this.accessory.getService('Microwave Timer') ||
       this.accessory.addService(this.platform.Service.Valve, 'Microwave Timer', 'NicoCataGaTa-OvenT32');
@@ -457,14 +457,14 @@ export default class Microwave extends baseDevice {
     this.ovenAlarmService.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Microwave Timer');
     this.ovenAlarmService.setCharacteristic(Characteristic.ValveType, Characteristic.ValveType.IRRIGATION);
     this.ovenAlarmService.getCharacteristic(Characteristic.Active)
-      .on('get', (callback) => {
+      .onGet(() => {
         let currentValue = 0;
         if (this.ovenTimerTime() != 0) {
           currentValue = 1;
         }
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value == 0) {
           this.timerAlarmSec = 0;
           this.sendTimerCommand(0);
@@ -477,32 +477,32 @@ export default class Microwave extends baseDevice {
           this.ovenAlarmService.updateCharacteristic(Characteristic.RemainingDuration, this.timerAlarmSec);
           this.ovenAlarmService.updateCharacteristic(Characteristic.InUse, 1);
         }
-        callback(null);
+
       });
     this.ovenAlarmService.setCharacteristic(Characteristic.InUse, this.ovenTimerTime() > 0 ? Characteristic.InUse.IN_USE : Characteristic.InUse.NOT_IN_USE);
     this.ovenAlarmService.getCharacteristic(Characteristic.RemainingDuration)
       .setProps({
         maxValue: (6000 - 1), // 100 minutes
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenTimerTime();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenAlarmService.getCharacteristic(this.platform.Characteristic.SetDuration)
       .setProps({
         maxValue: (6000 - 1), // 100 minutes
         minStep: 60,
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.timerAlarmSec;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (Number(value) >= 6000) {
           value = 6000 - 1;
         }
         this.timerAlarmSec = value as number;
-        callback(null);
+
       });
 
     ///////////Switches
@@ -512,16 +512,16 @@ export default class Microwave extends baseDevice {
     this.microwaveSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.microwaveSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Microwave Mode');
     this.microwaveSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value) {
           this.ovenCommandList.ovenMode = 'MICROWAVE';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
 
@@ -530,32 +530,32 @@ export default class Microwave extends baseDevice {
     this.combiBakeSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.combiBakeSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Combination Bake Mode');
     this.combiBakeSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value) {
           this.ovenCommandList.ovenMode = 'COMBI_BAKE';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
     this.dehydrateSwitch = accessory.getService('Dehydrate Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Dehydrate Mode', 'CataNicoGaTa-80d');
     this.dehydrateSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.dehydrateSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Dehydrate Mode');
     this.dehydrateSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value) {
           this.ovenCommandList.ovenMode = 'DEHYDRATE';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
     this.ovenSwitch = accessory.getService('Oven Mode') ||
@@ -563,32 +563,32 @@ export default class Microwave extends baseDevice {
     this.ovenSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.ovenSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Oven Mode');
     this.ovenSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value) {
           this.ovenCommandList.ovenMode = 'OVEN';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
     this.convectionBakeSwitch = accessory.getService('Convection Bake Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Convection Bake Mode', 'CataNicoGaTa-Control1');
     this.convectionBakeSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.convectionBakeSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Convection Bake Mode');
     this.convectionBakeSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'CONV_BAKE';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
     this.convectionRoastSwitch = accessory.getService('Combination Roast Mode') ||
@@ -596,16 +596,16 @@ export default class Microwave extends baseDevice {
     this.convectionRoastSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.convectionRoastSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Combination Roast Mode');
     this.convectionRoastSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'COMBI_ROAST';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
     this.frozenMealSwitch = accessory.getService('Time Defrost Mode') ||
@@ -613,32 +613,32 @@ export default class Microwave extends baseDevice {
     this.frozenMealSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.frozenMealSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Time Defrost Mode');
     this.frozenMealSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'TIME_DEFROST';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
     this.defrostSwitch = accessory.getService('Defrost Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Defrost Mode', 'CataNicoGaTa-Control3D');
     this.defrostSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.defrostSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Defrost Mode');
     this.defrostSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'INVERTER_DEFROST';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
     this.airFrySwitch = accessory.getService('Air Fry Mode') ||
@@ -646,32 +646,32 @@ export default class Microwave extends baseDevice {
     this.airFrySwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.airFrySwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Air Fry Mode');
     this.airFrySwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'AIRFRY';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
     this.proofSwitch = accessory.getService('Proof Mode') ||
       accessory.addService(this.platform.Service.Switch, 'Proof Mode', 'CataNicoGaTa-Control5');
     this.proofSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.proofSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Proof Mode');
     this.proofSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'PROOF';
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
 
     this.warmModeSwitch = accessory.getService('Warm Mode (High)') ||
@@ -679,28 +679,28 @@ export default class Microwave extends baseDevice {
     this.warmModeSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.warmModeSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Warm Mode (High)');
     this.warmModeSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.ovenCommandList.ovenMode = 'WARM';
           // this.timeModeCommand();
         }
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
     this.cancelSwitch = accessory.getService('Stop Microwave') ||
       accessory.addService(this.platform.Service.Switch, 'Stop Microwave', 'CataNicoGaTa-Control6');
     this.cancelSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.cancelSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Stop Microwave');
     this.cancelSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.stopOven();
         }
@@ -708,25 +708,25 @@ export default class Microwave extends baseDevice {
           this.cancelSwitch.updateCharacteristic(this.platform.Characteristic.On, false);
         }, 1000);
         this.updateOvenModeSwitch();
-        callback(null);
+
       });
     this.startOvenSwitch = accessory.getService('Start Microwave') ||
       accessory.addService(this.platform.Service.Switch, 'Start Microwave', 'CataNicoGaTa-Control8');
     this.startOvenSwitch.addOptionalCharacteristic(this.platform.Characteristic.ConfiguredName);
     this.startOvenSwitch.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Start Microwave');
     this.startOvenSwitch.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = false;
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value === true) {
           this.sendOvenCommand();
           setTimeout(() => {
             this.startOvenSwitch.updateCharacteristic(this.platform.Characteristic.On, false);
           }, 1000);
         }
-        callback(null);
+
       });
     /////////Temperature Control
     this.ovenTempControl = this.accessory.getService('Microwave Oven Temperature Control') ||
@@ -738,17 +738,17 @@ export default class Microwave extends baseDevice {
     this.ovenTempControl.setCharacteristic(this.platform.Characteristic.ConfiguredName, 'Microwave Oven Temperature Control');
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
       .setProps({ validValues: [this.platform.Characteristic.TargetHeatingCoolingState.OFF, this.platform.Characteristic.TargetHeatingCoolingState.HEAT] })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.targetHeatingState();
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (value == 0) {
           this.stopOven();
         } else {
           this.pauseUpdate = true;
         }
-        callback(null);
+
       });
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.CurrentTemperature)
       .setProps({
@@ -756,14 +756,14 @@ export default class Microwave extends baseDevice {
         maxValue: 233,
         minStep: 0.5,
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenCurrentTemperature();
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.localHumidity;
-        callback(null, currentValue);
+        return currentValue;
       });
     this.ovenTempControl.getCharacteristic(this.platform.Characteristic.TargetTemperature)
       .setProps({
@@ -771,17 +771,17 @@ export default class Microwave extends baseDevice {
         maxValue: 233,
         minStep: 0.5,
       })
-      .on('get', (callback) => {
+      .onGet(() => {
         const currentValue = this.ovenTargetTemperature();
-        callback(null, currentValue);
+        return currentValue;
       })
-      .on('set', (value, callback) => {
+      .onSet((value) => {
         if (this.Status.data?.LWOTargetTemperatureUnit.includes('FAH')) {
           this.ovenCommandList.ovenSetTemperature = Math.round(this.tempCtoF(value) / 5) * 5;
         } else {
           this.ovenCommandList.ovenSetTemperature = Math.round((value as number) / 5) * 5;
         }
-        callback(null);
+
       });
 
 

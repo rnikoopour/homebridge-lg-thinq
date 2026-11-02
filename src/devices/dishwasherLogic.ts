@@ -45,3 +45,65 @@ export function nextDishwasherStep(tracker: ProgramTracker, data: DishwasherData
   values?: DishwasherStateValues): ProgramStep {
   return nextProgramStep(tracker, dishwasherProgramStatus(data, values));
 }
+
+export interface DishwasherDisplayData extends DishwasherData {
+  door?: string;
+  rinseLevel?: string;
+  delayStart?: string;
+  process?: string;
+  initialTimeHour?: number;
+  initialTimeMinute?: number;
+}
+
+/** Rinse aid level: LG only reports it reliably while running; otherwise keep the last known level. */
+export function rinseLevelFor(data: DishwasherDisplayData | null | undefined, lastLevel: string,
+  values: DishwasherStateValues = DEFAULT_DISHWASHER_STATE_VALUES): string {
+  return data?.state === values.running ? (data.rinseLevel || 'LEVEL_1') : lastLevel;
+}
+
+export function rinseLevelPercent(level: string): number {
+  if (level === 'LEVEL_0') {
+    return 0;
+  }
+  return level === 'LEVEL_1' ? 50 : 100;
+}
+
+export interface DishwasherView {
+  powerOn: boolean;
+  /** Valve Active: on with time left on a program. */
+  active: boolean;
+  /** Valve InUse: running, excluding a delayed start that has not begun. */
+  inUse: boolean;
+  remainingSeconds: number;
+  /** Total program length; null when the dishwasher is off (keep the last value). */
+  setDurationSeconds: number | null;
+  doorClosed: boolean;
+  rinseLevel: string;
+  rinsePercent: number;
+  rinseLow: boolean;
+}
+
+export function dishwasherView(data: DishwasherDisplayData | null | undefined, options: {
+  values?: DishwasherStateValues;
+  doorClosedValue?: string | null;
+  lastRinseLevel: string;
+}): DishwasherView {
+  const values = options.values ?? DEFAULT_DISHWASHER_STATE_VALUES;
+  const status = dishwasherProgramStatus(data, values);
+  const delayedStart = data?.delayStart === 'ON' && String(data?.process ?? '').includes('RESER');
+  const rinseLevel = rinseLevelFor(data, options.lastRinseLevel, values);
+
+  return {
+    powerOn: status.powerOn,
+    active: status.powerOn && status.remainingSeconds > 0,
+    inUse: status.running && !delayedStart,
+    remainingSeconds: status.remainingSeconds,
+    setDurationSeconds: status.powerOn
+      ? (Number(data?.initialTimeHour) || 0) * 3600 + (Number(data?.initialTimeMinute) || 0) * 60
+      : null,
+    doorClosed: data?.door === (options.doorClosedValue ?? 'CLOSE'),
+    rinseLevel,
+    rinsePercent: rinseLevelPercent(rinseLevel),
+    rinseLow: rinseLevel === 'LEVEL_0',
+  };
+}

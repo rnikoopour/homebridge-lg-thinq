@@ -305,3 +305,17 @@ test('dishwasher: a live program triggers Program Finished once; stopping mid-pr
   send({ state: 'END' });
   assert.equal(fired.length, 1, 'finished once');
 });
+
+test('dishwasher: publishes only the valve, door and Program Finished services', async () => {
+  const DISHWASHER_ID = hap.uuid.generate('dishwasher-3');
+  const data = structuredClone(sample('dishwasher.json').data);
+  data.deviceId = DISHWASHER_ID;
+  const device = new Device(data);
+  device.deviceModel = new DeviceModel(sample('dishwasher-model.json'));
+  const { platform, calls } = makePlatform([{ id: DISHWASHER_ID, name: 'Dishwasher', dishwasher_trigger: true }]);
+  stubThinQ(platform, [device]);
+  await platform.discoverDevices();
+
+  const types = calls.registered[0].services.map(s => s.UUID).sort();
+  assert.deepEqual(types, [Service.AccessoryInformation.UUID, Service.ContactSensor.UUID, Service.OccupancySensor.UUID, Service.Valve.UUID].sort());
+});

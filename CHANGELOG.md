@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.9.1
+
+* Names are published only through each service's Name (set from the Homebridge config), like homebridge-pihole. The writable ConfiguredName characteristic is no longer published and is stripped from cached accessories.
+
 ## v1.9.0
 
 Maintained fork based on upstream v1.8.11 (the v2 rewrite is not used).

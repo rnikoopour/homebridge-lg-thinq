@@ -48,19 +48,31 @@ than removed; open the LG ThinQ app and restart Homebridge.
 
 This is the migration path from [nVuln's upstream package](https://github.com/nVuln/homebridge-lg-thinq),
 `homebridge-lg-thinq`. The package name changed to `@rnikoopour/homebridge-lg-thinq`,
-so Homebridge would treat existing accessories as new (and HomeKit would drop their
-rooms and automations). To keep them, stop Homebridge, uninstall nVuln's
-`homebridge-lg-thinq`, install this package, and relabel the cached accessories
-before starting Homebridge again:
+so Homebridge treats existing accessories as new (and HomeKit would drop their rooms
+and automations).
 
-```
-cd <homebridge storage path>/accessories
-# cachedAccessories (main bridge) or cachedAccessories.<child bridge id>
-jq '(.[] | select(.plugin == "homebridge-lg-thinq") | .plugin) = "@rnikoopour/homebridge-lg-thinq"' \
-  cachedAccessories.XXXX > tmp && mv tmp cachedAccessories.XXXX
-```
+Keep the accessories by relabeling the cache before Homebridge starts with the new
+package:
 
-The `LGThinQ` platform config is unchanged.
+1. Stop Homebridge.
+2. In the Homebridge storage directory (as the user that runs Homebridge), install
+   this package and remove the old one:
+   ```
+   npm install @rnikoopour/homebridge-lg-thinq
+   npm uninstall homebridge-lg-thinq
+   ```
+3. Relabel the cached accessories. The main bridge uses `accessories/cachedAccessories`;
+   a child bridge uses `accessories/cachedAccessories.<BRIDGE_USERNAME>`, where
+   `<BRIDGE_USERNAME>` is the bridge username in uppercase with colons removed.
+   Run this in the accessories directory, using the filename for your setup:
+   ```
+   jq '(.[] | select(.plugin == "homebridge-lg-thinq") | .plugin) = "@rnikoopour/homebridge-lg-thinq"' \
+     cachedAccessories > tmp && mv tmp cachedAccessories
+   ```
+4. Start Homebridge.
+
+The `LGThinQ` platform config is unchanged. Stored device data stays under
+`homebridge-lg-thinq/`, so it is reused.
 
 ## Configuration
 

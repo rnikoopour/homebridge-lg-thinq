@@ -1,4 +1,3 @@
-
 <p align="center">
 <img src="https://raw.githubusercontent.com/homebridge/branding/latest/logos/homebridge-wordmark-logo-vertical.png" width="150">
 </p>
@@ -10,19 +9,33 @@
 
 ## Overview
 
-A Homebridge plugin for controlling/monitoring LG ThinQ device via their ThinQ platform.
+A Homebridge plugin that exposes supported LG ThinQ appliances to HomeKit for
+control and monitoring.
 
-⚠️ This library works with v2 of the LG ThinQ API. But some v1 device may backward compatible, please check table [Implementation Status](#implementation-status) below.
+⚠️ This plugin targets v2 of the LG ThinQ API. Some v1 devices are supported via
+the `thinq1` option; see [Implementation Status](#implementation-status) for which
+devices can be controlled and which are status-only.
 
-A plugin for interacting with the "LG ThinQ" system, which can control new LG smart device. API used in this plugin is not official, I reversed from their "LG ThinQ" mobile app.
+This project is not affiliated with LG.
+
+## Requirements
+
+- Homebridge 2.x
+- Node.js 22.12+, 24.x or 26.x
 
 ## Installation
 
-Search for `@rnikoopour/homebridge-lg-thinq` in the Homebridge UI, or:
+Install it from the Homebridge UI: open **Plugins**, search for
+`@rnikoopour/homebridge-lg-thinq`, and click **Install**. To install it from a
+shell, run this in the Homebridge storage directory and restart Homebridge:
 
 ```
-npm i -g @rnikoopour/homebridge-lg-thinq
+npm install @rnikoopour/homebridge-lg-thinq
 ```
+
+Installing the package globally (`npm i -g`) only makes the `thinq` CLI available:
+Homebridge loads plugins from its own storage `node_modules`, so a global install
+does not register the plugin with Homebridge.
 
 ### LG terms of service
 
@@ -47,57 +60,80 @@ jq '(.[] | select(.plugin == "homebridge-lg-thinq") | .plugin) = "@rnikoopour/ho
 
 The `LGThinQ` platform config is unchanged.
 
-# Configuration
+## Configuration
 
-> ✔️ I highly recommend using [homebridge-config-ui-x](https://github.com/homebridge/homebridge-config-ui-x#readme) to make these changes.
-
-1. Navigate to the Plugins page in [homebridge-config-ui-x](https://github.com/homebridge/homebridge-config-ui-x).
+1. Open the Homebridge UI and go to the **Plugins** page.
 2. Click the **Settings** button for the LG ThinQ plugin.
-3. Login to your LG account
-4. Add or remove which devices you want
+3. Log in to your LG account.
+4. Select the devices you want to publish.
 5. Restart Homebridge for the changes to take effect.
 
-> ⚠️ Or you can manual edit it, add json below to config.json (not recommend)
+> ⚠️ Or manually add the JSON below to config.json (not recommended).
+
+`auth_mode` only decides which fields the settings screen shows. The plugin itself
+uses the refresh token whenever one is present, otherwise the username and password.
+
+Account mode:
+
 ```json
 {
-  "auth_mode": "token",
-  "refresh_token": "**refresh*token**",
+  "auth_mode": "account",
   "username": "lg username",
   "password": "lg password",
   "country": "US",
   "language": "en-US",
   "thinq1": false,
   "devices": [
-	{
-	  "id": "device id"
-	}
+    {
+      "id": "device id"
+    }
   ],
   "platform": "LGThinQ"
 }
-
 ```
-- `auth_mode` Required. You can choose between `token` and `account`
-- `refresh_token` Required if `auth_mode` = `token`. The `refresh_token` of your account.
-- `username` Required if `auth_mode` = `account`. LG thinQ account
-- `password` Required if `auth_mode` = `account`. LG thinQ password
+
+Token mode:
+
+```json
+{
+  "auth_mode": "token",
+  "refresh_token": "**refresh*token**",
+  "country": "US",
+  "language": "en-US",
+  "thinq1": false,
+  "devices": [
+    {
+      "id": "device id"
+    }
+  ],
+  "platform": "LGThinQ"
+}
+```
+
+- `auth_mode` Optional. `token` or `account`. Only controls which fields the settings screen shows; the plugin does not read it.
+- `refresh_token` The refresh token of your account. Used whenever it is present, and takes precedence over `username`/`password`.
+- `username` LG ThinQ account. Used when no `refresh_token` is set.
+- `password` LG ThinQ password. Used when no `refresh_token` is set.
 - `country` Required. Your account [country alpha-2 code](https://www.countrycode.org/), e.g., US for the USA.
 - `language` Required. Your account language code, e.g., en-US, vi-VN.
-- `devices` List devices you want add to homebridge, leave it empty if you want add all devices. See [Device configuration](#device-configuration).
-- `thinq1` Optional. Enable thinq1 device support
-- `refresh_interval` Optional. Seconds between status polls (default 60): ThinQ1 devices rely on this polling, ThinQ2 devices use it as a backup in case real-time (MQTT) updates are missed. Keep it above 30 with ThinQ1 devices, or LG may block the account.
+- `devices` List devices you want to add to Homebridge; leave it empty to add all devices. See [Device configuration](#device-configuration).
+- `thinq1` Optional. Enable ThinQ1 device support.
+- `refresh_interval` Optional. Seconds between status polls (default 60): ThinQ1 devices rely on this polling, ThinQ2 devices use it as a backup in case real-time (MQTT) updates are missed. The plugin does not enforce a minimum; with ThinQ1 devices, keeping it above 30 seconds is recommended so LG does not rate-limit the account.
 - `platform` value always `LGThinQ`
 
 ## Plugin Authorization Setting
 
-The plugin signs in with an LG account username and password.
+The plugin signs in with an LG account: either a refresh token or a username and
+password. If both are configured, the refresh token wins.
 
-If your LG account uses Google, Apple or Facebook sign-in, create a second LG
+If your LG account uses Google, Apple, Facebook or Amazon sign-in, create a second LG
 account with a username and password (it can use the same email; LG treats them
 as separate accounts), share your home with it from the LG ThinQ app, and use the
 second account in the plugin settings.
 
-To avoid storing a password, use `auth_mode: "token"` with a `refresh_token`
-obtained from the bundled CLI (see [CLI Usage](#cli-usage)):
+To avoid storing a password, use a `refresh_token` obtained from the bundled CLI
+(the settings screen shows a "Refresh Token" field when `auth_mode` is `token`;
+see [CLI Usage](#cli-usage)):
 
 ```
 $ thinq login <username> <password> -c US -l en-US
@@ -106,52 +142,64 @@ Your refresh_token: ...
 
 ## Device configuration
 
-Each entry in `devices` takes `id` (required) and `name` (optional, overrides the
-LG app name). Device-specific options, all off unless noted:
+Each entry in `devices` takes `id` (required), `name` (optional, overrides the LG
+app name) and `serial_number` (optional, overrides the HomeKit Serial Number
+characteristic). Device-specific options are off by default unless noted:
 
 | Device | Option | Description |
 | --- | --- | --- |
-| Washer / Dryer / WashTower | `washer_trigger` | "Program Finished" occupancy sensor for automations |
-| | `washer_door_lock` | Door lock status |
+| Washer / Dryer / WashTower (including WashTower 2) | `washer_trigger` | "Program Finished" occupancy sensor for automations |
+| | `washer_door_lock` | Door lock status (ThinQ2, when reported) |
 | | `washer_tub_clean` | Tub clean event |
 | Dishwasher | `dishwasher_trigger` | "Program Finished" occupancy sensor |
 | Air conditioner | `ac_mode` | `COOLING`, `HEATING` or `BOTH` (default) |
-| | `ac_swing_mode` | `VERTICAL`, `HORIZONTAL` or `BOTH` (on/off only) |
+| | `ac_swing_mode` | `VERTICAL`, `HORIZONTAL` or `BOTH`. HomeKit exposes a single on/off swing control; this picks which axis(es) it drives |
 | | `ac_air_quality` | Air quality sensor, if supported |
 | | `ac_temperature_sensor` / `ac_humidity_sensor` | Separate sensors for automations |
-| | `ac_led_control` / `ac_fan_control` / `ac_jet_control` | Extra controls, if supported |
-| | `ac_energy_save` / `ac_air_clean` | Switches (default on) |
+| | `ac_fan_control` / `ac_jet_control` | Extra controls, if supported |
+| | `ac_led_control` | LED panel switch |
+| | `ac_energy_save` / `ac_air_clean` | Energy Saver / Air Clean switches, where supported (default on) |
 | | `ac_temperature_unit` | `C` or `F` |
 | | `ac_buttons` | Extra mode buttons: `[{"name": "Dry", "op_mode": 1}]` |
-| Refrigerator | `ref_express_freezer` / `ref_express_fridge` / `ref_eco_friendly` | Switches |
+| Refrigerator | `ref_express_freezer` | Express Freezer / Ice Plus switch |
+| | `ref_express_fridge` | Express Fridge switch |
+| | `ref_eco_friendly` | Eco Friendly switch |
 | Air purifier | `air_fast_mode` | Fast mode switch |
-| Range | `burners_name` | Name of the separate cooktop Burners accessory (default "Burners") |
+| Oven / Range | `burners_name` | Name of the separate cooktop Burners accessory (default "Burners"). LG reports ranges as `OVEN`; the accessory is created for `OVEN` devices |
 
 ## Implementation Status
 
-| *Device*       | *Implementation* | *Status* | *Control* | *Thinq2* | *Thinq1* |
-|----------------| --- | --- | --- | --- | --- |
-| Refrigerator   | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
-| Air Purifier   | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
-| Washer & Dryer | ✔️ | ✔️ | 🚫 | ✔️ | ✔️ |
-| Dishwasher     | ✔️ | ✔️ | 🚫 | ✔️ | 🚫 |
-| Dehumidifier   | ✔️ | ✔️ | ⚠️ | ✔️ | 🚫 |
-| AC             | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
-| Oven           | ✔️ | ✔️ | ✔️ | ⚠️ | ⚠️ |
-| Microwave      | ✔️ | ✔️ | ✔️ | ⚠️ | ⚠️ |
+| Device | ThinQ2 | ThinQ1 | Control | Notes |
+| --- | --- | --- | --- | --- |
+| Refrigerator | ✔️ | ✔️ | ✔️ | |
+| Air Purifier | ✔️ | ✔️ | ✔️ | |
+| AeroTower | ✔️ | 🚫 | ✔️ | Extends the air purifier with temperature, humidity and UV-nano services |
+| Washer & Dryer | ✔️ | ✔️ | ThinQ1 only | ThinQ2 is status-only |
+| WashTower 2 (new kind) | ✔️ | 🚫 | 🚫 | Status only |
+| Dishwasher | ✔️ | 🚫 | 🚫 | Status only |
+| Dehumidifier | ✔️ | 🚫 | ✔️ | |
+| AC | ✔️ | ✔️ | ✔️ | |
+| Oven / Range | ✔️ | 🚫 | ✔️ | Cooktop published as a separate Burners accessory |
+| Microwave | ✔️ | 🚫 | ✔️ | |
+| Styler | ✔️ | 🚫 | 🚫 | Status only |
+| Range Hood | ✔️ | ✔️ | ✔️ | |
 
-for more device support please open issue request.
+`Control` means HomeKit can send commands; devices marked 🚫 still publish status.
+
+For more device support, please open an issue request.
 
 ## Contributors ✨
 
-- Special thank to [carlosgamezvillegas](https://github.com/carlosgamezvillegas) for implementing Oven & Microwave device support. More detail in [#87](https://github.com/nVuln/homebridge-lg-thinq/issues/87)
+- Special thanks to [carlosgamezvillegas](https://github.com/carlosgamezvillegas) for implementing Oven & Microwave device support. More detail in [#87](https://github.com/nVuln/homebridge-lg-thinq/issues/87).
 
 ## Support
 
-If you have a question, please [open an issue](https://github.com/rnikoopour/homebridge-lg-thinq/issues/new).  
-If you would like to report a bug, please [open an issue](https://github.com/rnikoopour/homebridge-lg-thinq/issues/new).
+Questions and bug reports: please [open an issue](https://github.com/rnikoopour/homebridge-lg-thinq/issues/new).
 
 ## CLI Usage
+
+The package installs the `thinq` CLI (or install it globally with
+`npm i -g @rnikoopour/homebridge-lg-thinq`).
 
 ```
 $ thinq
@@ -164,6 +212,10 @@ Options:
 
 Commands:
   login <username> <password>  Obtain refresh_token from LG account
-  auth                         Obtain refresh_token from account logged by Google Account, Apple ID
+  auth                         Obtain refresh_token from an account logged by
+                               Google, Apple, Facebook or Amazon
   help [command]               display help for command
 ```
+
+`thinq login` prints the refresh token. `thinq auth` prints a login URL; open it,
+sign in, then paste the redirected URL back into the terminal.

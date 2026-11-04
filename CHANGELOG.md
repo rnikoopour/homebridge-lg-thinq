@@ -1,5 +1,14 @@
 # Change Log
 
+## v2.2.4
+
+* Fix: `thinq login` no longer prints the account password to the terminal.
+* Fix: accepting LG's new terms now uses the account's configured country and language instead of LG's Vietnam (`VN` / `en-VN`) endpoint.
+* Fix: the AC settings screen now exposes `ac_led_control`.
+* Fix: the Range settings section no longer describes itself as dishwasher settings.
+* Fix: the settings schema now lists every supported device type and no longer advertises `RANGE`/`COOKTOP`, which the plugin cannot handle.
+* Docs: README corrected against the code (auth precedence, Burners/Range, support table, install options, engine requirements).
+
 ## v2.2.3
 
 * Fix: when `refresh_interval` is not set, devices are polled every 60 seconds (the settings UI default) instead of every 5 seconds. The settings UI only shows this option with ThinQ1 enabled, so most setups were polling LG every 5 seconds.

@@ -152,7 +152,9 @@ export class Auth {
 
   public async handleNewTerm(accessToken) {
     const showTermUrl = 'common/showTerms?callback_url=lgaccount.lgsmartthinq:/updateTerms'
-      + '&country=VN&language=en-VN&division=ha:T20&terms_display_type=3&svc_list=SVC202';
+      + `&country=${encodeURIComponent(this.gateway.country_code)}`
+      + `&language=${encodeURIComponent(this.gateway.language_code)}`
+      + '&division=ha:T20&terms_display_type=3&svc_list=SVC202';
     const showTermHtml = await requestClient.get(this.gateway.login_base_url + showTermUrl, {
       headers: {
         'X-Login-Session': accessToken,

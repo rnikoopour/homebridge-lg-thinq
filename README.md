@@ -44,12 +44,14 @@ so the integration keeps working (it logs "Handling new term agreement..." when 
 does). If LG still returns no devices afterwards, cached accessories are kept rather
 than removed; open the LG ThinQ app and restart Homebridge.
 
-### Migrating from `homebridge-lg-thinq`
+### Migrating from nVuln's `homebridge-lg-thinq`
 
-The package name changed, so Homebridge would treat existing accessories as new
-(and HomeKit would drop their rooms and automations). To keep them, stop
-Homebridge, uninstall `homebridge-lg-thinq`, install this package, and relabel the
-cached accessories before starting Homebridge again:
+This is the migration path from [nVuln's upstream package](https://github.com/nVuln/homebridge-lg-thinq),
+`homebridge-lg-thinq`. The package name changed to `@rnikoopour/homebridge-lg-thinq`,
+so Homebridge would treat existing accessories as new (and HomeKit would drop their
+rooms and automations). To keep them, stop Homebridge, uninstall nVuln's
+`homebridge-lg-thinq`, install this package, and relabel the cached accessories
+before starting Homebridge again:
 
 ```
 cd <homebridge storage path>/accessories
@@ -68,47 +70,7 @@ The `LGThinQ` platform config is unchanged.
 4. Select the devices you want to publish.
 5. Restart Homebridge for the changes to take effect.
 
-> ⚠️ Or manually add the JSON below to config.json (not recommended).
-
-`auth_mode` only decides which fields the settings screen shows. The plugin itself
-uses the refresh token whenever one is present, otherwise the username and password.
-
-Account mode:
-
-```json
-{
-  "auth_mode": "account",
-  "username": "lg username",
-  "password": "lg password",
-  "country": "US",
-  "language": "en-US",
-  "thinq1": false,
-  "devices": [
-    {
-      "id": "device id"
-    }
-  ],
-  "platform": "LGThinQ"
-}
-```
-
-Token mode:
-
-```json
-{
-  "auth_mode": "token",
-  "refresh_token": "**refresh*token**",
-  "country": "US",
-  "language": "en-US",
-  "thinq1": false,
-  "devices": [
-    {
-      "id": "device id"
-    }
-  ],
-  "platform": "LGThinQ"
-}
-```
+The settings screen writes the plugin config for you. These are the fields it manages:
 
 - `auth_mode` Optional. `token` or `account`. Only controls which fields the settings screen shows; the plugin does not read it.
 - `refresh_token` The refresh token of your account. Used whenever it is present, and takes precedence over `username`/`password`.

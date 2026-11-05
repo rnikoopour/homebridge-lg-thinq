@@ -1,5 +1,12 @@
 # Change Log
 
+## v2.2.5
+
+* Fix: account/password login now uses LG's server-side signature endpoint; LG removed the `searchKey` endpoint that returned the signing key.
+* Fix: `thinq auth` uses the redirect URI LG accepts (`https://kr.m.lgaccount.com/login/iabClose`) instead of the plugin's own URI, which LG rejects.
+* Fix: stop calling LG's retired `common/showTerms` endpoint. When LG asks for new terms, the plugin now tells you to accept them in the LG ThinQ app instead.
+* Docs: explain the new-term acceptance flow.
+
 ## v2.2.4
 
 * Fix: `thinq login` no longer prints the account password to the terminal.

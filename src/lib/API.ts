@@ -66,21 +66,10 @@ export class API {
           return {};
         });
       } else if (err instanceof ManualProcessNeeded) {
-        this.logger.warn('Handling new term agreement... If you keep getting this message, ' + err.message);
-        await this.auth.handleNewTerm(this.session.accessToken)
-          .then(() => {
-            this.logger.warn('LG new term agreement is accepted.');
-          })
-          .catch(err => {
-            this.logger.debug(err);
-          });
-
-        if (!retry) {
-          // retry 1 times
-          return await this.request(method, uri, data, true);
-        } else {
-          return {};
-        }
+        // LG retired the endpoint the plugin used to accept terms automatically.
+        this.logger.warn('LG requires accepting new terms. Open the LG ThinQ app, sign out and sign in again, '
+          + 'accept any new terms, then restart Homebridge.');
+        return {};
       } else {
         if (axios.isAxiosError(err)) {
           this.logger.debug('request error: ', err.response);

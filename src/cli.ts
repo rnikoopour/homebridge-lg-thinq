@@ -57,11 +57,12 @@ program
     const auth = new Auth(gateway);
 
     const loginUrl = new URL(await auth.getLoginUrl());
-    const origin = loginUrl.origin;
+    // LG rejects the plugin's own redirect URI; this is the one its login page uses.
+    const browserLoginRedirect = 'https://kr.m.lgaccount.com/login/iabClose';
     loginUrl.host = 'us.m.lgaccount.com';
     loginUrl.searchParams.set('division', 'ha'); // enable Apple ID
-    loginUrl.searchParams.set('redirect_uri', origin + '/login/iabClose');
-    loginUrl.searchParams.set('callback_url', origin + '/login/iabClose');
+    loginUrl.searchParams.set('redirect_uri', browserLoginRedirect);
+    loginUrl.searchParams.set('callback_url', browserLoginRedirect);
 
     // eslint-disable-next-line no-console
     console.info('Log in here:', loginUrl.href);

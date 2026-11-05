@@ -8,6 +8,10 @@ import {Gateway} from './Gateway';
 import {requestClient} from './request';
 import {Session} from './Session';
 
+// Base64 HMAC as returned by LG's signature service (28 characters for HMAC-SHA1).
+// Anything else, such as the HTML 404 page LG serves for removed routes, is rejected.
+const EMP_SIGNATURE_PATTERN = /^[A-Za-z0-9+/]{16,128}={0,2}$/;
+
 export class Auth {
   public lgeapi_url: string;
 
@@ -62,10 +66,6 @@ export class Auth {
       throw new AuthenticationError(message);
     });
 
-    // dynamic get secret key for emp signature
-    const empSearchKeyUrl = this.gateway.login_base_url + 'searchKey?key_name=OAUTH_SECRETKEY&sever_type=OP';
-    const secretKey = await requestClient.get(empSearchKeyUrl).then(res => res.data).then(data => data.returnData);
-
     const timestamp = DateTime.utc().toRFC2822();
     const empData = {
       account_type: account.userIDType,
@@ -77,7 +77,7 @@ export class Auth {
       username: account.userID,
     };
     const empUrl = new URL('https://emp-oauth.lgecloud.com/emp/oauth2/authorize/empsession?' + qs.stringify(empData));
-    const signature = this.signature(`${empUrl.pathname}${empUrl.search}\n${timestamp}`, secretKey);
+    const signature = await this.requestEmpSignature(`${empUrl.pathname}${empUrl.search}\n${timestamp}`);
     const empHeaders = {
       'lgemp-x-app-key': constants.OAUTH_CLIENT_KEY,
       'lgemp-x-date': timestamp,
@@ -150,50 +150,33 @@ export class Auth {
     };
   }
 
-  public async handleNewTerm(accessToken) {
-    const showTermUrl = 'common/showTerms?callback_url=lgaccount.lgsmartthinq:/updateTerms'
-      + `&country=${encodeURIComponent(this.gateway.country_code)}`
-      + `&language=${encodeURIComponent(this.gateway.language_code)}`
-      + '&division=ha:T20&terms_display_type=3&svc_list=SVC202';
-    const showTermHtml = await requestClient.get(this.gateway.login_base_url + showTermUrl, {
-      headers: {
-        'X-Login-Session': accessToken,
-      },
-    }).then(res => res.data);
-
-    const headers = {
-      ...this.defaultEmpHeaders,
-      'X-Login-Session': accessToken,
-      'X-Signature': showTermHtml.match(/signature[\s]+:[\s]+"([^"]+)"/)[1],
-      'X-Timestamp': showTermHtml.match(/tStamp[\s]+:[\s]+"([^"]+)"/)[1],
-    };
-
-    const accountTermUrl = 'emp/v2.0/account/user/terms?opt_term_cond=001&term_data=SVC202&itg_terms_use_flag=Y&dummy_terms_use_flag=Y';
-    const accountTerms = (await requestClient.get(this.gateway.emp_base_url + accountTermUrl, {headers})
-      .then(res => {
-        return res.data.account?.terms;
-      }))
-      .map(term => {
-        return term.termsID;
-      });
-
-    const termInfoUrl = 'emp/v2.0/info/terms?opt_term_cond=001&only_service_terms_flag=&itg_terms_use_flag=Y&term_data=SVC202';
-    const infoTerms = await requestClient.get(this.gateway.emp_base_url + termInfoUrl, {headers}).then(res => {
-      return res.data.info.terms;
+  /**
+   * Asks LG's SPX signature service to sign an EMP OAuth request. LG removed
+   * `searchKey`, which used to return the secret to the client, and now signs
+   * the request server-side.
+   */
+  public async requestEmpSignature(message: string) {
+    const signatureUrl = this.gateway.login_base_url + 'signature?' + qs.stringify({
+      kind: 'oauth2',
+      timestamp: message,
+      key_name: 'OAUTH_SECRETKEY',
+      sever_type: 'OP',
     });
 
-    const newTermAgreeNeeded = infoTerms.filter((term) => {
-      return accountTerms.indexOf(term.termsID) === -1;
-    }).map(term => {
-      return [term.termsType, term.termsID, term.defaultLang].join(':');
-    }).join(',');
+    const body = await requestClient.get(signatureUrl, {
+      headers: {'Accept': 'text/plain, */*'},
+      responseType: 'text',
+      transformResponse: [(data: unknown) => data],
+    }).then(res => res.data).catch(err => {
+      throw new AuthenticationError('LG OAuth signature request failed: ' + (err?.message ?? err));
+    });
 
-    if (newTermAgreeNeeded) {
-      const updateAccountTermUrl = 'emp/v2.0/account/user/terms';
-      await requestClient.post(this.gateway.emp_base_url + updateAccountTermUrl, qs.stringify({terms: newTermAgreeNeeded}), {
-        headers,
-      });
+    const signature = typeof body === 'string' ? body.trim() : '';
+    if (!EMP_SIGNATURE_PATTERN.test(signature)) {
+      throw new AuthenticationError('LG OAuth signature request failed: unexpected response from the LG signature service.');
     }
+
+    return signature;
   }
 
   public async getJSessionId(accessToken: string) {

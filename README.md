@@ -39,10 +39,10 @@ does not register the plugin with Homebridge.
 
 ### LG terms of service
 
-When LG publishes new terms for your account, the plugin accepts them automatically
-so the integration keeps working (it logs "Handling new term agreement..." when it
-does). If LG still returns no devices afterwards, cached accessories are kept rather
-than removed; open the LG ThinQ app and restart Homebridge.
+When LG requires accepting new terms for your account, the plugin cannot accept them
+for you. It logs a message asking you to open the LG ThinQ app, sign out and sign in
+again, accept any new terms, and restart Homebridge. Cached accessories are kept rather
+than removed while this is pending.
 
 ### Migrating from nVuln's `homebridge-lg-thinq`
 

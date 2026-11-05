@@ -28,7 +28,8 @@
     "build": "rimraf ./dist && tsc",
     "prepublishOnly": "npm run lint && npm run build",
     "test": "node --test \"test/**/*.test.mjs\"",
-    "check": "npm run lint && npm run build && npm test"
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=45 --test-coverage-branches=70 --test-coverage-functions=44 \"test/**/*.test.mjs\"",
+    "check": "npm run lint && npm run build && npm run test:coverage"
   },
   "keywords": [
     "homebridge-plugin",

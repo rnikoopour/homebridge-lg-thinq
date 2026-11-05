@@ -11,12 +11,16 @@ permissions:
   contents: write
   id-token: write
 
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.x
           registry-url: https://registry.npmjs.org
@@ -39,9 +43,13 @@ jobs:
           else
             npm publish --access public
           fi
-      - name: Create GitHub release
+      - name: Create GitHub release (skipped if it already exists)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           awk -v v="## $GITHUB_REF_NAME" '/^## /{ if (p) exit } $0 == v { p = 1; next } p' CHANGELOG.md > notes.md
-          gh release create "$GITHUB_REF_NAME" ./*.tgz --title "$GITHUB_REF_NAME" --notes-file notes.md
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; skipping"
+          else
+            gh release create "$GITHUB_REF_NAME" ./*.tgz --title "$GITHUB_REF_NAME" --notes-file notes.md
+          fi

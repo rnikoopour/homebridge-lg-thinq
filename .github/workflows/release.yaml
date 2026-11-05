@@ -43,9 +43,13 @@ jobs:
           else
             npm publish --access public
           fi
-      - name: Create GitHub release
+      - name: Create GitHub release (skipped if it already exists)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           awk -v v="## $GITHUB_REF_NAME" '/^## /{ if (p) exit } $0 == v { p = 1; next } p' CHANGELOG.md > notes.md
-          gh release create "$GITHUB_REF_NAME" ./*.tgz --title "$GITHUB_REF_NAME" --notes-file notes.md
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; skipping"
+          else
+            gh release create "$GITHUB_REF_NAME" ./*.tgz --title "$GITHUB_REF_NAME" --notes-file notes.md
+          fi

@@ -1,0 +1,22 @@
+config:
+  # Keep prose readable without forcing a hard wrap width.
+  MD013: false
+  # README uses badges and the Homebridge logo.
+  MD033: false
+  # README starts with the logo, not a heading.
+  MD041: false
+  # CHANGELOG repeats section names across releases.
+  MD024: false
+  # Existing CHANGELOG uses both list markers.
+  MD004: false
+  # Code fences in numbered steps are intentionally tight.
+  MD031: false
+  # Fenced blocks are mostly shell snippets and JSON examples.
+  MD040: false
+  MD012: false
+
+globs:
+  - "**/*.md"
+ignores:
+  - "node_modules/**"
+  - "sample/**"

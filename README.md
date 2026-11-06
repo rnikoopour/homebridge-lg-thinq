@@ -1,9 +1,11 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/homebridge/branding/latest/logos/homebridge-wordmark-logo-vertical.png" width="150">
+<img src="https://raw.githubusercontent.com/homebridge/branding/latest/logos/homebridge-wordmark-logo-vertical.png" alt="Homebridge" width="150">
 </p>
 
-
 # Homebridge LG ThinQ
+
+[![CI](https://github.com/rnikoopour/homebridge-lg-thinq/actions/workflows/ci.yaml/badge.svg)](https://github.com/rnikoopour/homebridge-lg-thinq/actions/workflows/ci.yaml)
+[![npm](https://img.shields.io/npm/v/@rnikoopour/homebridge-lg-thinq)](https://www.npmjs.com/package/@rnikoopour/homebridge-lg-thinq)
 
 > **Maintained fork** by [rnikoopour](https://github.com/rnikoopour) of [nVuln/homebridge-lg-thinq](https://github.com/nVuln/homebridge-lg-thinq) (Apache-2.0), based on upstream v1.8.11. See [CHANGELOG.md](CHANGELOG.md) for what changed. Published to npm as [`@rnikoopour/homebridge-lg-thinq`](https://www.npmjs.com/package/@rnikoopour/homebridge-lg-thinq).
 

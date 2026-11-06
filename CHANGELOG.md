@@ -86,6 +86,7 @@ Maintained fork based on upstream v1.8.11 (the v2 rewrite is not used).
 ## v1.8.0
 
 ### Washer is fixed now
+
 * Washer should be appear in Home app now, so sorry for my mistake in previous version.
 * Reset Homebridge accesssory cache is required to make it work.
 
@@ -115,6 +116,7 @@ Maintained fork based on upstream v1.8.11 (the v2 rewrite is not used).
 ## v1.5.0
 
 ### IMPORTANT: AC temperature unit need to be set in plugin setting
+
 - if your AC is in Fahrenheit, please change it in plugin setting to make sure the temperature value is correct, otherwise it will be converted to Celsius by default.
 - in previous version, the temperature unit is auto detected, but it's not reliable, so we have to change it to manual setting.
 

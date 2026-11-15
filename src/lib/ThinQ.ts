@@ -44,10 +44,9 @@ export class ThinQ {
     this.persist = new Persist(Path.join(this.platform.api.user.storagePath(), PLUGIN_STORAGE_DIR, 'persist', 'devices'));
   }
 
+  /** Devices on the account. Rejects when LG cannot be reached, rather than reporting no devices. */
   public async devices() {
-    const listDevices = await this.api.getListDevices().catch(() => {
-      return [];
-    });
+    const listDevices = await this.api.getListDevices();
 
     return listDevices.map(device => new Device(device))
       // skip all device invalid id

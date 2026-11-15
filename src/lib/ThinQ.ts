@@ -13,6 +13,7 @@ import {PLUGIN_STORAGE_DIR} from '../settings';
 import {device as awsIotDevice} from 'aws-iot-device-sdk';
 import {URL} from 'url';
 import Persist from './Persist';
+import {retryDelayMs} from '../platformLogic';
 
 export type WorkId = ReturnType<typeof randomUUID>;
 
@@ -21,6 +22,10 @@ export class ThinQ {
   protected workIds: Record<string, WorkId> = {};
   protected deviceModel: Record<string, DeviceModel> = {};
   protected persist;
+  /** The live MQTT client; null while (re)connecting. */
+  protected mqttClient: ReturnType<typeof awsIotDevice> | null = null;
+  /** Starts a fresh MQTT connection after `delayMs`; set once MQTT is first up. */
+  protected scheduleMqttReconnect: ((delayMs: number) => void) | null = null;
   constructor(
     public readonly platform: LGThinQHomebridgePlatform,
     public readonly config: PlatformConfig,
@@ -190,23 +195,33 @@ export class ThinQ {
       });
   }
 
+  /** Start MQTT, retrying with backoff until it connects. Never rejects. */
   public async registerMQTTListener(callback: (data: any) => void) {
     const delayMs = ms => new Promise(res => setTimeout(res, ms));
 
-    let tried = 5;
-    while(tried > 0) {
+    for (let attempt = 0; ; attempt++) {
       try {
         await this._registerMQTTListener(callback);
         return;
       } catch (err) {
-        tried--;
-        this.log.debug('Cannot start MQTT, retrying in 5s.');
+        const delay = retryDelayMs(attempt, 5_000, 300_000);
+        this.log.warn('Cannot start MQTT, retrying in ' + delay / 1000 + ' seconds:', (err as Error)?.message ?? err);
         this.log.debug('mqtt err:', err);
-        await delayMs(5000);
+        await delayMs(delay);
       }
     }
+  }
 
-    this.log.error('Cannot start MQTT!');
+  /** Drop the current MQTT connection and open a new one now. No-op while not connected. */
+  public reconnectMQTT() {
+    const client = this.mqttClient;
+    if (!client || !this.scheduleMqttReconnect) {
+      return;
+    }
+
+    this.mqttClient = null;
+    client.end(true);
+    this.scheduleMqttReconnect(0);
   }
 
   protected async _registerMQTTListener(callback: (data: any) => void) {
@@ -281,6 +296,7 @@ export class ThinQ {
 
       this.log.debug('open mqtt connection to', route.mqttServer);
       const device = awsIotDevice(connectData);
+      this.mqttClient = device;
 
       device.on('error', (err) => {
         this.log.error('mqtt err:', err);
@@ -302,20 +318,32 @@ export class ThinQ {
         }
       });
       device.on('offline', () => {
+        if (device !== this.mqttClient) {
+          return; // already replaced (e.g. by reconnectMQTT)
+        }
+        this.mqttClient = null;
         device.end();
 
         this.log.info('MQTT disconnected, retrying in 60 seconds!');
-        const reconnect = () => connectToMqtt().catch(err => {
+        scheduleReconnect(60000);
+      });
+    };
+
+    let reconnectTimer: NodeJS.Timeout | undefined;
+    const scheduleReconnect = (delayMs: number) => {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(() => {
+        connectToMqtt().catch(err => {
           this.log.error('MQTT reconnect failed, retrying in 60 seconds:', err?.message ?? err);
           this.log.debug(err);
-          setTimeout(() => void reconnect(), 60000);
+          scheduleReconnect(60000);
         });
-        setTimeout(() => void reconnect(), 60000);
-      });
+      }, delayMs);
     };
 
     // first call
     await connectToMqtt();
+    this.scheduleMqttReconnect = scheduleReconnect;
   }
 
   public async isReady() {

@@ -105,3 +105,11 @@ export function prefixedServiceName(current: string, deviceName: string): string
 export function keepCacheOnEmptyDeviceList(deviceCount: number, cachedCount: number): boolean {
   return deviceCount === 0 && cachedCount > 0;
 }
+
+/**
+ * Exponential backoff for retrying a failed connection: base, 2x base, 4x base...
+ * capped at max. `attempt` counts from 0.
+ */
+export function retryDelayMs(attempt: number, baseMs = 30_000, maxMs = 600_000): number {
+  return Math.min(baseMs * 2 ** Math.max(0, attempt), maxMs);
+}

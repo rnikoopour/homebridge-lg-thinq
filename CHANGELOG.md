@@ -1,5 +1,16 @@
 # Change Log
 
+## v2.2.6
+
+Fixes for updates (and "Program Finished" alerts) silently stopping until Homebridge was restarted:
+
+* Fix: access tokens are refreshed shortly before they expire. The plugin never recorded the expiry, so it only refreshed after LG rejected a request.
+* Fix: a token refresh that returns no access token no longer replaces the working session with an empty one, which left the plugin unable to reach LG at all. With username/password sign-in, a failed refresh now signs in again.
+* Fix: an LG or network outage while Homebridge starts is retried with backoff (up to every 10 minutes) instead of needing a restart.
+* Fix: MQTT startup keeps retrying with backoff instead of giving up after 5 tries.
+* Fix: when the backup poll keeps seeing device changes that MQTT never delivered, MQTT is reconnected (at most every 30 minutes).
+* Failed device polls and token refreshes are now logged as warnings/errors instead of only at debug level: once per outage, with a message when polling works again.
+
 ## v2.2.5
 
 * Fix: account/password login now uses LG's server-side signature endpoint; LG removed the `searchKey` endpoint that returned the signing key.

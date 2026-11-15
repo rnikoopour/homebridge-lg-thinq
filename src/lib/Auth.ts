@@ -252,6 +252,11 @@ export class Auth {
       'Content-Type': 'application/x-www-form-urlencoded',
     };
     const resp = await requestClient.post(tokenUrl, qs.stringify(data), {headers}).then(resp => resp.data);
+    if (!resp?.access_token) {
+      // Keep the old session: storing an empty token would stop LG from ever answering
+      // "token expired" again, so nothing would trigger another refresh.
+      throw new TokenError('LG did not return an access token: ' + JSON.stringify(resp?.error ?? resp));
+    }
 
     session.newToken(resp.access_token, parseInt(resp.expires_in));
 

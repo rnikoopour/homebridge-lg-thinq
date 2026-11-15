@@ -6,8 +6,11 @@ import Range from './devices/Range';
 import {ThinQ} from './lib/ThinQ';
 import {EventEmitter} from 'events';
 import {PlatformType} from './lib/constants';
-import {AccessoryPlan, accessoryPlans, configuredName, deviceDecision, keepCacheOnEmptyDeviceList, prefixedServiceName} from './platformLogic';
+import {
+  AccessoryPlan, accessoryPlans, configuredName, deviceDecision, keepCacheOnEmptyDeviceList, prefixedServiceName, retryDelayMs,
+} from './platformLogic';
 import {ManualProcessNeeded, NotConnectedError} from './errors';
+import {MqttWatchdog} from './lib/mqttWatchdog';
 import {Device} from './lib/Device';
 import Characteristics from './characteristics';
 
@@ -31,6 +34,11 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
 
   // enable thinq1 support
   private readonly enable_thinq1: boolean = false;
+
+  /** UUIDs of accessories already wired to a handler, so a retried discovery does not wire them twice. */
+  private readonly wiredAccessories = new Set<string>();
+
+  private readonly mqttWatchdog = new MqttWatchdog();
 
   constructor(
     public readonly log: Logger,
@@ -58,35 +66,31 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    const didFinishLaunching = () => {
-      // run the method to discover / register your devices as accessories
-      this.ThinQ.isReady().then(() => {
+    // Connect and discover devices, retrying with backoff until both succeed; an LG
+    // or network outage while Homebridge starts used to need a restart to recover.
+    const didFinishLaunching = (attempt = 0) => {
+      let connected = false;
+      this.ThinQ.isReady().then(async () => {
+        connected = true;
         this.log.info('Successfully connected to the ThinQ API.');
-        const discoverDevices = () => {
-          this.discoverDevices().then(async () => {
-            await this.startMonitor();
-          }).catch(err => {
-            if (err instanceof NotConnectedError) {
-              setTimeout(() => {
-                discoverDevices();
-              }, 30000);
-            } else {
-              this.log.error(err.message);
-              this.log.debug(err);
-            }
-          });
-        };
-
-        discoverDevices();
-      }).catch(err => {
-        if (err.message === 'Internal Server Error' || err.code?.indexOf('ECONN') === 0 || err instanceof NotConnectedError) {
-          this.log.error('LG ThinQ internal server error, try again later.');
+        await this.discoverDevices();
+      }).then(() => {
+        this.startMonitor().catch(err => {
+          this.log.error('Failed to start monitoring devices:', err?.message ?? err);
+          this.log.debug(err);
+        });
+      }, err => {
+        const delay = retryDelayMs(attempt);
+        if (connected) {
+          this.log.error('Failed to discover ThinQ devices:', err?.message ?? err);
+        } else if (err?.message === 'Internal Server Error' || err?.code?.indexOf('ECONN') === 0 || err instanceof NotConnectedError) {
+          this.log.error('LG ThinQ internal server error:', err?.message ?? err);
         } else {
-          this.log.error('ThinQ API is not ready. please check configuration and try again.');
+          this.log.error('ThinQ API is not ready. Check the configuration if this persists:', err?.message ?? err);
         }
-
-        this.log.error(err.message);
+        this.log.error('Retrying in ' + delay / 1000 + ' seconds.');
         this.log.debug(err);
+        setTimeout(() => didFinishLaunching(attempt + 1), delay);
       });
     };
 
@@ -166,6 +170,13 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     let accessory = this.accessories.find(cached => cached.UUID === uuid);
     if (accessory) {
       accessoriesToRemoveUUID.splice(accessoriesToRemoveUUID.indexOf(uuid), 1);
+    }
+    if (this.wiredAccessories.has(uuid)) {
+      return; // set up by an earlier, interrupted discovery
+    }
+    this.wiredAccessories.add(uuid);
+
+    if (accessory) {
       this.log.info('Restoring existing accessory:', name, '(' + device.toString() + ')');
       accessory.context.device = device;
       if (accessory.displayName !== name) {
@@ -267,20 +278,37 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
     const thinq2devices = this.accessories.filter(accessory => accessory.context.device.platform === PlatformType.ThinQ2);
 
     if (thinq2devices.length) {
+      let pollFailing = false;
       setInterval(() => {
         this.ThinQ.devices().then((devices) => {
-          devices.filter(device => device.platform === PlatformType.ThinQ2).forEach(device => {
+          if (pollFailing) {
+            pollFailing = false;
+            this.log.info('Polling ThinQ devices works again.');
+          }
+          const thinq2 = devices.filter(device => device.platform === PlatformType.ThinQ2);
+          thinq2.forEach(device => {
             this.events.emit(device.id, device.snapshot);
           });
+
+          if (this.mqttWatchdog.observePoll(thinq2.map(device => ({id: device.id, snapshot: device.snapshot})), Date.now())) {
+            this.log.warn('MQTT stopped delivering updates that polling still sees; reconnecting MQTT.');
+            this.ThinQ.reconnectMQTT();
+          }
         }).catch(err => {
-          this.log.error('Failed to poll devices:', err?.message ?? err);
+          // Logged once per outage: polls repeat every interval while LG is unreachable.
+          if (!pollFailing) {
+            pollFailing = true;
+            this.log.error('Failed to poll devices, will keep retrying:', err?.message ?? err);
+          }
           this.log.debug(err);
         });
       }, this.intervalTime); // backup in case MQTT misses updates
 
       this.log.info('Start MQTT listener for thinq2 device');
-      await this.ThinQ.registerMQTTListener((data) => {
+      // Not awaited: it retries until connected, and ThinQ1 polling below must not wait for it.
+      void this.ThinQ.registerMQTTListener((data) => {
         if ('data' in data && 'deviceId' in data) {
+          this.mqttWatchdog.messageReceived(data.deviceId, Date.now());
           this.events.emit(data.deviceId, data.data?.state?.reported);
         }
       });

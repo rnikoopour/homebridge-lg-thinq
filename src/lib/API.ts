@@ -33,6 +33,9 @@ export class API {
 
   public logger;
 
+  /** The re-authentication in flight, shared so concurrent requests refresh once. */
+  protected reauthenticating: Promise<void> | null = null;
+
   constructor(
     protected country: string = 'US',
     protected language: string = 'en-US',
@@ -49,6 +52,9 @@ export class API {
   }
 
   protected async request(method, uri: string, data?: any, retry = false) {
+    if (!retry) {
+      await this.refreshIfExpiring();
+    }
 
     const requestHeaders = (this._gateway?.thinq1_url && uri.startsWith(this._gateway.thinq1_url)) ? this.monitorHeaders : this.defaultHeaders;
 
@@ -59,10 +65,11 @@ export class API {
       headers: requestHeaders,
     }).then(res => res.data).catch(async err => {
       if (err instanceof TokenExpiredError && !retry) {
-        return await this.refreshNewToken().then(async () => {
+        return await this.reauthenticate().then(async () => {
           return await this.request(method, uri, data, true);
         }).catch((err) => {
-          this.logger.debug('refresh new token error: ', err);
+          this.logger.warn('Failed to refresh the LG access token:', err?.message ?? err);
+          this.logger.debug(err);
           return {};
         });
       } else if (err instanceof ManualProcessNeeded) {
@@ -147,6 +154,7 @@ export class API {
     return await this.getRequest('service/devices/' + device_id).then(data => data.result);
   }
 
+  /** All devices in every home. Throws when LG does not return a list, so callers can tell failure from "no devices". */
   public async getListDevices() {
     const homes = await this.getListHomes();
     const devices: Record<string, any>[] = [];
@@ -154,6 +162,9 @@ export class API {
     // get all devices in home
     for (let i = 0; i < homes.length; i++) {
       const resp = await this.getRequest('service/homes/' + homes[i].homeId);
+      if (!Array.isArray(resp?.result?.devices)) {
+        throw new Error('LG did not return the device list for home ' + homes[i].homeId);
+      }
 
       devices.push(...resp.result.devices);
     }
@@ -163,7 +174,11 @@ export class API {
 
   public async getListHomes() {
     if (!this._homes) {
-      this._homes = await this.getRequest('service/homes').then(data => data.result.item);
+      const homes = await this.getRequest('service/homes').then(data => data?.result?.item);
+      if (!Array.isArray(homes)) {
+        throw new Error('LG did not return the home list');
+      }
+      this._homes = homes;
     }
 
     return this._homes;
@@ -256,6 +271,47 @@ export class API {
     if (!this.client_id) {
       const hash = crypto.createHash('sha256');
       this.client_id = hash.update(this.userNumber + (new Date()).getTime()).digest('hex');
+    }
+  }
+
+  /** Refresh ahead of expiry instead of waiting for LG to reject a request. */
+  protected async refreshIfExpiring() {
+    if (!this.auth || !this.session.refreshToken || this.session.hasValidToken()) {
+      return;
+    }
+
+    await this.reauthenticate().catch(err => {
+      // The request still goes out; if the token really expired, LG's answer triggers another attempt.
+      this.logger.warn('Failed to refresh the LG access token:', err?.message ?? err);
+      this.logger.debug(err);
+    });
+  }
+
+  /**
+   * Get a working token again: refresh it, and if that fails and credentials are
+   * configured, sign in again (what a Homebridge restart would do).
+   */
+  public reauthenticate(): Promise<void> {
+    if (!this.reauthenticating) {
+      this.reauthenticating = this.doReauthenticate().finally(() => {
+        this.reauthenticating = null;
+      });
+    }
+
+    return this.reauthenticating;
+  }
+
+  protected async doReauthenticate() {
+    try {
+      await this.refreshNewToken();
+    } catch (err) {
+      if (!(this.username && this.password)) {
+        throw err;
+      }
+
+      this.logger.warn('Refreshing the LG access token failed, signing in again:', (err as Error)?.message ?? err);
+      this.session = await this.auth.login(this.username, this.password);
+      await this.refreshNewToken(this.session);
     }
   }
 

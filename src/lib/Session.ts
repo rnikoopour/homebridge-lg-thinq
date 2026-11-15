@@ -1,18 +1,21 @@
+/** Refresh this many seconds before LG's stated expiry, so a request never races it. */
+export const TOKEN_EXPIRY_MARGIN_SECONDS = 60;
+
 export class Session {
-  private expiresOn!: number;
+  private expiresOn = 0;
 
   constructor(
     private _accessToken: string,
     private readonly _refreshToken: string,
     private expiresIn: number,
   ) {
-    this._refreshToken = _refreshToken;
     this.newToken(_accessToken, expiresIn);
   }
 
   public newToken(accessToken, expiresIn): void {
     this._accessToken = accessToken;
-    this.expiresIn = expiresIn;
+    this.expiresIn = Number(expiresIn) || 0;
+    this.expiresOn = Session.getCurrentEpoch() + this.expiresIn;
   }
 
   public get accessToken(): string {
@@ -28,7 +31,7 @@ export class Session {
   }
 
   public isTokenExpired(): boolean {
-    return this.expiresOn < Session.getCurrentEpoch();
+    return this.expiresOn - TOKEN_EXPIRY_MARGIN_SECONDS <= Session.getCurrentEpoch();
   }
 
   public hasValidToken(): boolean {

@@ -166,3 +166,13 @@ test('getListDevices: lists devices from every home', async () => {
 
   assert.deepEqual(await api.getListDevices(), [{ deviceId: '1' }]);
 });
+
+test('refreshNewToken: a successful refresh is logged at info level with the token lifetime', async () => {
+  const { api } = makeApi({ refresh: async () => {}, responses: [] });
+  const infos = [];
+  api.logger = { ...quietLogger, info: (...args) => infos.push(args.join(' ')) };
+  api.setRefreshToken('refresh');
+
+  await api.refreshNewToken();
+  assert.deepEqual(infos, ['Refreshed the LG access token (valid for 3600 seconds).']);
+});

@@ -318,6 +318,7 @@ export class API {
   public async refreshNewToken(session: Session | null = null) {
     session = session || this.session;
     this.session = await this.auth.refreshNewToken(session);
+    this.logger.info('Refreshed the LG access token (valid for ' + this.session.lifetimeSeconds + ' seconds).');
 
     this.jsessionId = await this.auth.getJSessionId(this.session.accessToken);
   }

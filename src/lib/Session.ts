@@ -22,6 +22,11 @@ export class Session {
     return this._accessToken;
   }
 
+  /** Seconds the current access token was issued for. */
+  public get lifetimeSeconds(): number {
+    return this.expiresIn;
+  }
+
   public get refreshToken(): string {
     return this._refreshToken;
   }

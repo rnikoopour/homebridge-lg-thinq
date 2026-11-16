@@ -1,5 +1,9 @@
 # Change Log
 
+## v2.2.7
+
+* Each successful LG access token refresh is now logged at info level with the token's lifetime, so you can confirm refreshes without debug logging.
+
 ## v2.2.6
 
 Fixes for updates (and "Program Finished" alerts) silently stopping until Homebridge was restarted:
